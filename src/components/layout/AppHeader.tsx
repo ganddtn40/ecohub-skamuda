@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import type { UserRole } from "@/types/database";
 
 /**
- * Header emerald dengan sudut bawah melengkung (rounded-bottom).
+ * Kepala semua dashboard: satu bidang eco-900, tanpa sudut melengkung.
  * Desktop menampilkan nav inline; mobile memakai BottomNav.
  */
 export function AppHeader({
@@ -25,23 +25,20 @@ export function AppHeader({
   const nav = NAV_BY_ROLE[role];
 
   return (
-    <header className="rounded-b-header bg-eco-600 text-white">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
+    <header className="on-field bg-eco-900 text-white">
+      <div className="page-x flex items-center justify-between gap-3 py-4">
         <BrandMark tone="light" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="hidden text-right sm:block">
-            <p className="text-sm font-semibold leading-tight">{fullName}</p>
-            <p className="text-[11px] text-white/75">{roleLabel}</p>
+            <p className="text-[15px] font-bold leading-tight">{fullName}</p>
+            <p className="text-small text-white/70">{roleLabel}</p>
           </div>
           <LogoutButton />
         </div>
       </div>
 
-      <nav
-        aria-label="Navigasi utama"
-        className="mx-auto hidden w-full max-w-5xl gap-1 px-4 pb-3 sm:px-6 md:flex"
-      >
+      <nav aria-label="Navigasi utama" className="page-x hidden gap-1 pb-4 md:flex">
         {nav.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -51,8 +48,8 @@ export function AppHeader({
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-control px-3 text-sm font-semibold transition-colors",
-                active ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white",
+                "inline-flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-semibold transition-colors",
+                active ? "bg-white text-eco-900" : "text-white/80 hover:bg-white/10 hover:text-white",
               )}
             >
               <Icon size={17} />

@@ -16,9 +16,9 @@ export function PageTitle({
   return (
     <div className={cn("flex flex-wrap items-start justify-between gap-3", className)}>
       <div>
-        <h1 className="text-xl font-bold tracking-[-0.01em] text-ink sm:text-2xl">{title}</h1>
+        <h1 className="text-item font-bold text-ink">{title}</h1>
         {description ? (
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{description}</p>
+          <p className="mt-2 max-w-2xl text-body text-ink-soft">{description}</p>
         ) : null}
       </div>
       {action}

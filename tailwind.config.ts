@@ -1,10 +1,15 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Design tokens - "Clean Emerald Eco-App"
- * - One ground (#F4F7F5), one ink (#0F1F17), one accent (eco-600 #0A7A44), one secondary accent (gold, points only).
- * - Surfaces are separated by a 1px hairline (#E3EAE5), not by heavy shadows.
- * - Radii: cards 16px, controls 12px, header 24px. Not everything is a pill.
+ * Token desain - "Colour chapters, eco-tech".
+ *
+ * - Arah: setiap bagian halaman adalah satu bidang warna penuh (chapter) yang
+ *   ditempel langsung ke bagian berikutnya, tanpa jeda dan tanpa garis pemisah.
+ *   Warna diambil dari lingkungan sekolah sendiri: hijau daun, sage, dan kertas.
+ * - Satu ground (#F4F7F5), satu ink (#0F1F17), satu aksen (eco-600 #0A7A44).
+ *   Gold hanya untuk poin, karena poin satu-satunya hal yang langka dan didapat.
+ * - Tanpa gradient. Bidang dipisahkan oleh langkah nada, bukan oleh bayangan.
+ * - Skala tipografi lima langkah, tidak lebih.
  */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx,mdx}"],
@@ -48,13 +53,24 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
       },
+      /**
+       * Lima langkah, berjauhan. Display dipakai satu kali saja (headline hero).
+       * Body tidak pernah di bawah 16px, small tidak pernah di bawah 13px.
+       */
+      fontSize: {
+        display: ["clamp(2rem, 6.4vw, 6.25rem)", { lineHeight: "0.95", letterSpacing: "-0.03em" }],
+        chapter: ["clamp(1.75rem, 4.2vw, 3.5rem)", { lineHeight: "1.02", letterSpacing: "-0.025em" }],
+        item: ["clamp(1.25rem, 2.6vw, 2.125rem)", { lineHeight: "1.12", letterSpacing: "-0.02em" }],
+        body: ["1.0625rem", { lineHeight: "1.55" }],
+        small: ["0.8125rem", { lineHeight: "1.45" }],
+      },
       borderRadius: {
         card: "1rem",
         control: "0.75rem",
         header: "1.5rem",
       },
       boxShadow: {
-        // Only for things that genuinely float: sticky bars, sheets, dialogs.
+        // Hanya untuk yang benar-benar mengambang: bar lengket, sheet, dialog.
         float: "0 8px 24px -12px rgba(15, 31, 23, 0.18)",
         sheet: "0 -12px 32px -16px rgba(15, 31, 23, 0.24)",
       },
@@ -71,11 +87,26 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(24px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        drift: {
+          "0%, 100%": { transform: "translate3d(0, 0, 0) rotate(0deg)" },
+          "50%": { transform: "translate3d(0, -14px, 0) rotate(-1.2deg)" },
+        },
+        "ring-sweep": {
+          from: { strokeDashoffset: "var(--ring-len, 900)" },
+          to: { strokeDashoffset: "0" },
+        },
+        "slow-zoom": {
+          from: { transform: "scale(1.02)" },
+          to: { transform: "scale(1.12)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both",
         "fade-in": "fade-in 240ms ease-out both",
         "sheet-up": "sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        drift: "drift 9s ease-in-out infinite",
+        "ring-sweep": "ring-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) both",
+        "slow-zoom": "slow-zoom 22s ease-in-out infinite alternate",
       },
     },
   },

@@ -140,16 +140,16 @@ export function BookingVerifier() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
-      <section className="rounded-card border border-line bg-white p-5">
+      <section className="rounded-card bg-white p-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-eco-700">
             <Camera size={18} />
-            <h2 className="text-sm font-semibold">Pindai tiket pesanan</h2>
+            <h2 className="text-[15px] font-semibold">Pindai tiket pesanan</h2>
           </div>
           <button
             type="button"
             onClick={() => setCameraActive((value) => !value)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-control border border-line px-2.5 text-xs font-semibold text-ink-soft hover:bg-mint"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-small font-semibold text-ink-soft hover:bg-mint"
           >
             {cameraActive ? <CameraOff size={14} /> : <Camera size={14} />}
             {cameraActive ? "Matikan" : "Nyalakan"}
@@ -164,7 +164,7 @@ export function BookingVerifier() {
           />
         </div>
 
-        <div className="mt-4 border-t border-line pt-4">
+        <div className="mt-4 pt-4">
           <Field label="Input kode booking manual" htmlFor="vendor-code">
             <Input
               id="vendor-code"
@@ -189,7 +189,7 @@ export function BookingVerifier() {
         {error ? (
           <p
             role="alert"
-            className="mt-3 flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-sm text-danger-600"
+            className="flex items-start gap-2 rounded-control bg-danger-50 px-3 py-2.5 text-[15px] text-danger-600"
           >
             <AlertCircle size={17} className="mt-0.5 shrink-0" />
             {error}
@@ -199,7 +199,7 @@ export function BookingVerifier() {
 
       <section className="space-y-4">
         {notice ? (
-          <p className="flex items-center gap-2 rounded-control border border-eco-200 bg-eco-50 px-3 py-2.5 text-sm font-semibold text-eco-700">
+          <p className="mt-3 flex items-center gap-2 rounded-control bg-eco-50 px-3.5 py-2.5 text-[15px] font-semibold text-eco-700">
             <CheckCheck size={17} />
             {notice}
           </p>
@@ -215,7 +215,7 @@ export function BookingVerifier() {
                   {NEXT_ACTION[order.status]!.label}
                 </Button>
               ) : (
-                <p className="flex-1 rounded-control border border-line bg-mint px-3 py-3 text-center text-sm font-semibold text-muted">
+                <p className="flex-1 rounded-control bg-mint px-3 py-3 text-center text-[15px] font-semibold text-muted">
                   Pesanan sudah selesai.
                 </p>
               )}
@@ -225,10 +225,10 @@ export function BookingVerifier() {
             </div>
           </>
         ) : (
-          <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line bg-white px-4 text-center">
+          <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-card bg-white px-4 text-center">
             <PackageCheck size={28} className="text-muted" />
-            <p className="text-sm font-semibold text-ink">Belum ada tiket diverifikasi</p>
-            <p className="max-w-xs text-sm text-muted">
+            <p className="text-[15px] font-semibold text-ink">Belum ada tiket diverifikasi</p>
+            <p className="max-w-xs text-[15px] text-muted">
               Pindai QR tiket atau masukkan kode booking untuk memverifikasi pesanan siswa.
             </p>
           </div>

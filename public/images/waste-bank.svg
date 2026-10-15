@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 600" width="560" height="600" fill="none" role="img" aria-labelledby="binTitle">
+  <title id="binTitle">Tempat sampah daur ulang terbuka berisi botol plastik, kaleng, dan kardus</title>
+  <style>
+    .leaf-b { fill: #149057; }
+    .leaf-m { fill: #3DAA78; }
+    .leaf-l { fill: #74C79E; }
+    .card   { fill: #FCEBC8; }
+    .card-e { fill: #D98A0B; }
+    .pet    { fill: #D3EEDF; }
+    .pet-s  { fill: #A7DDC1; }
+    .pet-d  { fill: #74C79E; }
+    .can    { fill: #C9D6CF; }
+    .can-t  { fill: #9FB3A8; }
+    .can-h  { fill: #EDF3EF; }
+    .bin    { fill: #0A7A44; }
+    .bin-s  { fill: #086337; }
+    .bin-d  { fill: #053B22; }
+    .bin-r  { fill: #074E2C; }
+    .ridge  { stroke: #053B22; stroke-width: 3; opacity: .14; }
+    .mark   { stroke: #EAF6EF; }
+  </style>
+
+  <defs>
+    <marker id="rec-head" viewBox="0 0 10 10" refX="6.4" refY="5" markerWidth="3" markerHeight="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0L10 5L0 10Z" fill="#EAF6EF" stroke="none" />
+    </marker>
+  </defs>
+
+  <ellipse cx="280" cy="566" rx="204" ry="24" fill="#EAF6EF" />
+
+  <!-- botanical, behind everything -->
+  <g class="leaf-m" transform="translate(148 322) rotate(-156) scale(1.7)">
+    <path d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+  </g>
+  <g class="leaf-l" transform="translate(142 376) rotate(-172) scale(1.2)">
+    <path d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+  </g>
+  <g class="leaf-b" transform="translate(420 326) rotate(-26) scale(1.5)">
+    <path d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+  </g>
+
+  <!-- cardboard, folded, standing at the back -->
+  <path class="card" d="M322 232L438 282L410 342L294 296Z" />
+  <path class="card-e" d="M322 232L438 282L430 300L314 250Z" opacity=".5" />
+  <path d="M368 256L360 316" stroke="#B45309" stroke-width="3" opacity=".35" />
+
+  <!-- aluminium can, leaning left -->
+  <g transform="rotate(-12 232 258)">
+    <rect class="can" x="198" y="182" width="68" height="124" rx="16" />
+    <path class="can-t" d="M203 198C203 190 218 185 232 185C246 185 261 190 261 198C261 206 246 211 232 211C218 211 203 206 203 198Z" />
+    <rect class="can-h" x="208" y="210" width="13" height="86" rx="6.5" />
+    <path class="can-t" d="M198 266H266V290H198Z" opacity=".4" />
+  </g>
+
+  <!-- PET bottle, standing tall -->
+  <rect class="pet-s" x="287" y="98" width="28" height="22" rx="7" />
+  <rect class="pet" x="290" y="118" width="22" height="30" />
+  <path class="pet" d="M301 144C284 152 272 170 272 192V326H324V192C324 170 318 152 301 144Z" />
+  <path class="pet-s" d="M308 147C320 158 324 174 324 194V326H308V192C308 174 311 157 308 147Z" />
+  <g class="pet-d" opacity=".45">
+    <rect x="276" y="224" width="44" height="6" rx="3" />
+    <rect x="276" y="242" width="44" height="6" rx="3" />
+    <rect x="276" y="260" width="44" height="6" rx="3" />
+  </g>
+  <rect class="pet-d" x="272" y="274" width="52" height="46" rx="6" />
+  <rect class="pet" x="283" y="288" width="30" height="9" rx="4.5" />
+
+  <!-- bin body, drawn over the bottle and can so they read as inside it -->
+  <path class="bin" d="M150 292H410L392 544A20 20 0 0 1 372 562H188A20 20 0 0 1 168 544Z" />
+  <path class="bin-s" d="M352 292H410L392 544A20 20 0 0 1 372 562H352Z" />
+  <path class="bin-d" d="M150 292H410L406 340H154Z" opacity=".2" />
+  <g class="ridge">
+    <path d="M192 330V542" /><path d="M232 330V542" />
+    <path d="M280 330V542" /><path d="M328 330V542" /><path d="M366 330V542" />
+  </g>
+
+  <!-- recycling mark on the front face: three chasing arrows on one ring -->
+  <g class="mark" stroke-width="13" stroke-linecap="round" fill="none" transform="translate(280 450) scale(1.25)">
+    <path d="M18.5 -29.7A35 35 0 0 1 30.3 17.5" marker-end="url(#rec-head)" />
+    <path d="M18.5 -29.7A35 35 0 0 1 30.3 17.5" marker-end="url(#rec-head)" transform="rotate(120)" />
+    <path d="M18.5 -29.7A35 35 0 0 1 30.3 17.5" marker-end="url(#rec-head)" transform="rotate(240)" />
+  </g>
+
+  <!-- rim, open lid, handle, wheels -->
+  <rect class="bin-r" x="138" y="272" width="284" height="32" rx="16" />
+  <g transform="rotate(-9 286 272)">
+    <rect class="bin-d" x="178" y="246" width="216" height="26" rx="13" />
+    <rect class="bin-r" x="262" y="252" width="86" height="13" rx="6.5" opacity=".45" />
+  </g>
+  <rect class="bin-r" x="196" y="556" width="168" height="14" rx="7" />
+  <circle class="bin-d" cx="190" cy="570" r="22" />
+  <circle class="bin-r" cx="190" cy="570" r="9" />
+  <circle class="bin-d" cx="370" cy="570" r="22" />
+  <circle class="bin-r" cx="370" cy="570" r="9" />
+</svg>

@@ -190,39 +190,39 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
 
   if (result) {
     return (
-      <div className="rounded-card border border-line bg-white p-5">
+      <div className="rounded-card bg-white p-5">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-full bg-eco-50 text-eco-700">
             <CheckCircle2 size={24} />
           </span>
           <div>
-            <p className="text-base font-bold text-ink">Setoran berhasil diproses</p>
-            <p className="text-sm text-muted">
+            <p className="text-[17px] font-bold text-ink">Setoran berhasil diproses</p>
+            <p className="text-[15px] text-muted">
               {result.full_name} &middot; {result.class_name ?? "Tanpa kelas"}
             </p>
           </div>
         </div>
 
         <dl className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-control border border-line p-3">
-            <dt className="text-xs text-muted">Jenis sampah</dt>
-            <dd className="mt-0.5 text-sm font-semibold text-ink">{result.item_label}</dd>
+          <div className="rounded-control bg-mint p-3.5">
+            <dt className="text-small text-muted">Jenis sampah</dt>
+            <dd className="mt-0.5 text-[15px] font-semibold text-ink">{result.item_label}</dd>
           </div>
-          <div className="rounded-control border border-line p-3">
-            <dt className="text-xs text-muted">Poin didapat</dt>
-            <dd className="tnum mt-0.5 text-sm font-bold text-eco-700">
+          <div className="rounded-control bg-mint p-3.5">
+            <dt className="text-small text-muted">Poin didapat</dt>
+            <dd className="tnum mt-0.5 text-[15px] font-bold text-eco-700">
               +{formatNumber(result.points_earned)} P
             </dd>
           </div>
-          <div className="rounded-control border border-line p-3">
-            <dt className="text-xs text-muted">Saldo poin sekarang</dt>
-            <dd className="tnum mt-0.5 text-sm font-semibold text-ink">
+          <div className="rounded-control bg-mint p-3.5">
+            <dt className="text-small text-muted">Saldo poin sekarang</dt>
+            <dd className="tnum mt-0.5 text-[15px] font-semibold text-ink">
               {formatNumber(result.points_balance)} P
             </dd>
           </div>
-          <div className="rounded-control border border-line p-3">
-            <dt className="text-xs text-muted">Total daur ulang</dt>
-            <dd className="tnum mt-0.5 text-sm font-semibold text-ink">
+          <div className="rounded-control bg-mint p-3.5">
+            <dt className="text-small text-muted">Total daur ulang</dt>
+            <dd className="tnum mt-0.5 text-[15px] font-semibold text-ink">
               {formatKg(result.total_recycled_kg)}
             </dd>
           </div>
@@ -239,22 +239,22 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       {/* Pemindai */}
-      <section className="rounded-card border border-line bg-white p-5">
+      <section className="rounded-card bg-white p-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-eco-700">
             <Camera size={18} />
-            <h2 className="text-sm font-semibold">Pemindai QR siswa</h2>
+            <h2 className="text-[15px] font-semibold">Pemindai QR siswa</h2>
           </div>
-          <span className="text-xs text-muted">Kamera langsung</span>
+          <span className="text-small text-muted">Kamera langsung</span>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-control border border-line bg-ink/5">
+        <div className="mt-4 overflow-hidden rounded-control bg-ink/5">
           {cameraOn && !student ? (
             <div id="qr-reader" className="min-h-[240px] w-full [&_video]:w-full" />
           ) : (
             <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 px-4 text-center">
               <CameraOff size={28} className="text-muted" />
-              <p className="text-sm text-muted">
+              <p className="text-[15px] text-muted">
                 {student ? "QR berhasil dipindai." : "Kamera dimatikan."}
               </p>
             </div>
@@ -262,13 +262,13 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
         </div>
 
         {cameraError ? (
-          <p className="mt-3 flex items-start gap-2 rounded-control border border-gold-100 bg-gold-50 px-3 py-2.5 text-sm text-gold-600">
+          <p className="mt-3 flex items-start gap-2 rounded-control border border-gold-100 bg-gold-50 px-3 py-2.5 text-[15px] text-gold-600">
             <AlertCircle size={17} className="mt-0.5 shrink-0" />
             {cameraError}
           </p>
         ) : null}
 
-        <div className="mt-4 border-t border-line pt-4">
+        <div className="mt-4 pt-4">
           <Field
             label="Input token manual"
             htmlFor="manual-token"
@@ -297,7 +297,7 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
         {error ? (
           <p
             role="alert"
-            className="mt-3 flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-sm text-danger-600"
+            className="mt-3 flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-[15px] text-danger-600"
           >
             <AlertCircle size={17} className="mt-0.5 shrink-0" />
             {error}
@@ -306,19 +306,19 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
       </section>
 
       {/* Form setoran */}
-      <section className="rounded-card border border-line bg-white p-5">
+      <section className="rounded-card bg-white p-5">
         <div className="flex items-center gap-2 text-eco-700">
           <Recycle size={18} />
-          <h2 className="text-sm font-semibold">Form setoran sampah</h2>
+          <h2 className="text-[15px] font-semibold">Form setoran sampah</h2>
         </div>
 
         {student ? (
           <>
-            <div className="mt-4 flex items-center gap-3 rounded-control border border-line bg-mint p-3">
+            <div className="mt-4 flex items-center gap-3 rounded-control bg-mint p-3">
               <Avatar name={student.full_name} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-ink">{student.full_name}</p>
-                <p className="text-xs text-muted">
+                <p className="truncate text-[15px] font-semibold text-ink">{student.full_name}</p>
+                <p className="text-small text-muted">
                   {student.class_name ?? "Tanpa kelas"} &middot; {formatNumber(student.points_balance)} P
                   &middot; {formatKg(student.total_recycled_kg)}
                 </p>
@@ -367,7 +367,7 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
 
               <div className="flex items-center gap-2 rounded-control bg-gold-50 px-3 py-2.5">
                 <Weight size={17} className="text-gold-600" />
-                <p className="text-sm text-gold-600">
+                <p className="text-[15px] text-gold-600">
                   Estimasi poin:{" "}
                   <span className="tnum font-bold">{formatNumber(estimatedPoints)} P</span>
                 </p>
@@ -380,10 +380,10 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
             </div>
           </>
         ) : (
-          <div className="mt-4 flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-control border border-dashed border-line px-4 text-center">
+          <div className="mt-4 flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-control px-4 text-center">
             <QrCode size={28} className="text-muted" />
-            <p className="text-sm font-semibold text-ink">Belum ada siswa terpilih</p>
-            <p className="max-w-xs text-sm text-muted">
+            <p className="text-[15px] font-semibold text-ink">Belum ada siswa terpilih</p>
+            <p className="max-w-xs text-[15px] text-muted">
               Pindai QR siswa dengan kamera atau masukkan token manual untuk membuka form setoran.
             </p>
           </div>

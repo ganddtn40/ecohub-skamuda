@@ -8,10 +8,13 @@ import { cn } from "@/lib/cn";
 export function BrandMark({
   tone = "dark",
   showText = true,
+  showSub = true,
   className,
 }: {
   tone?: "dark" | "light";
   showText?: boolean;
+  /** Baris "SMKN 1 Murung Pudak" di bawah wordmark. */
+  showSub?: boolean;
   className?: string;
 }) {
   const textColor = tone === "light" ? "text-white" : "text-ink";
@@ -32,7 +35,9 @@ export function BrandMark({
       {showText ? (
         <span className="leading-tight">
           <span className={cn("block text-[15px] font-bold", textColor)}>SKAMUDA EcoHub</span>
-          <span className={cn("block text-[11px]", subColor)}>SMKN 1 Murung Pudak</span>
+          {showSub ? (
+            <span className={cn("block text-[13px]", subColor)}>SMKN 1 Murung Pudak</span>
+          ) : null}
         </span>
       ) : null}
     </div>

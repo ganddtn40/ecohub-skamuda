@@ -12,7 +12,7 @@ export default function NotFound() {
     <div className="min-h-dvh bg-mint">
       <PublicHeader />
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6">
+      <main className="page-x mx-auto w-full max-w-5xl pb-16 pt-8">
         <EmptyState
           icon={<Compass size={22} />}
           title="Halaman tidak ditemukan"

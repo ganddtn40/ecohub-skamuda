@@ -25,7 +25,7 @@ export function LogoutButton({ className }: { className?: string }) {
       disabled={pending}
       aria-label="Keluar dari akun"
       className={cn(
-        "inline-flex h-11 items-center gap-2 rounded-control px-3 text-sm font-semibold text-white/90",
+        "inline-flex h-11 items-center gap-2 rounded-full px-3 text-[15px] font-semibold text-white/90",
         "transition-colors hover:bg-white/15 disabled:opacity-60",
         className,
       )}

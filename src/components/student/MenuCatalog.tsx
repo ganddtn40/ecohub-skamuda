@@ -196,7 +196,7 @@ export function MenuCatalog({
   return (
     <div className={cn(itemCount > 0 && "pb-24")}>
       {/* Filter stand kantin */}
-      <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+      <div className="flex items-center gap-2 text-[15px] font-semibold text-ink">
         <SlidersHorizontal size={16} className="text-eco-700" />
         Pilih stand kantin
       </div>
@@ -216,17 +216,17 @@ export function MenuCatalog({
               aria-selected={active}
               onClick={() => setStandId(stand.id)}
               className={cn(
-                "inline-flex h-11 shrink-0 items-center gap-2 rounded-control border px-3 text-sm font-semibold transition-colors",
+                "inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[15px] font-semibold transition-colors",
                 active
                   ? "border-eco-600 bg-eco-600 text-white"
-                  : "border-line bg-white text-ink-soft hover:bg-mint",
+                  : "bg-white text-ink-soft hover:bg-mint",
               )}
             >
               {stand.stand_name}
               {count > 0 ? (
                 <span
                   className={cn(
-                    "tnum grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs",
+                    "tnum grid h-5 min-w-5 place-items-center rounded-full px-1 text-small",
                     active ? "bg-white text-eco-700" : "bg-eco-600 text-white",
                   )}
                 >
@@ -239,7 +239,7 @@ export function MenuCatalog({
       </div>
 
       {currentStand?.description ? (
-        <p className="mt-3 text-sm leading-relaxed text-muted">{currentStand.description}</p>
+        <p className="mt-3 text-[15px] leading-relaxed text-muted">{currentStand.description}</p>
       ) : null}
 
       {/* Katalog menu */}
@@ -254,7 +254,7 @@ export function MenuCatalog({
           <div className="space-y-6">
             {grouped.map(([category, items]) => (
               <section key={category} aria-label={category}>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                <h3 className="text-[17px] font-bold text-ink">
                   {category}
                 </h3>
                 <ul className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -263,22 +263,22 @@ export function MenuCatalog({
                     return (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between gap-3 rounded-card border border-line bg-white p-3.5"
+                        className="flex items-center justify-between gap-3 rounded-card bg-white p-3.5"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-ink">{item.name}</p>
+                          <p className="truncate text-[15px] font-semibold text-ink">{item.name}</p>
                           <div className="mt-1 flex items-center gap-2">
-                            <span className="tnum text-sm font-bold text-eco-700">
+                            <span className="tnum text-[15px] font-bold text-eco-700">
                               {formatRupiah(item.price_idr)}
                             </span>
                             {item.points_price ? (
-                              <span className="tnum text-xs text-muted">
+                              <span className="tnum text-small text-muted">
                                 {item.points_price} P
                               </span>
                             ) : null}
                           </div>
                           {line?.notes ? (
-                            <p className="mt-1 truncate text-xs text-gold-600">
+                            <p className="mt-1 truncate text-small text-gold-600">
                               Catatan: {line.notes}
                             </p>
                           ) : null}
@@ -290,11 +290,11 @@ export function MenuCatalog({
                               type="button"
                               onClick={() => decreaseItem(item.id)}
                               aria-label={`Kurangi ${item.name}`}
-                              className="grid h-11 w-11 place-items-center rounded-control border border-line text-ink transition-colors hover:bg-mint"
+                              className="grid h-11 w-11 place-items-center rounded-control text-ink transition-colors hover:bg-mint"
                             >
                               <Minus size={16} />
                             </button>
-                            <span className="tnum w-6 text-center text-sm font-bold">{line.qty}</span>
+                            <span className="tnum w-6 text-center text-[15px] font-bold">{line.qty}</span>
                             <button
                               type="button"
                               onClick={() => addItem(item.id)}
@@ -308,7 +308,7 @@ export function MenuCatalog({
                           <button
                             type="button"
                             onClick={() => addItem(item.id)}
-                            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-control border border-eco-200 bg-eco-50 px-3 text-sm font-semibold text-eco-700 transition-colors hover:bg-eco-100"
+                            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-eco-50 px-4 text-[15px] font-semibold text-eco-700 transition-colors hover:bg-eco-100"
                           >
                             <Plus size={16} />
                             Tambah
@@ -327,12 +327,12 @@ export function MenuCatalog({
       {/* Bar keranjang */}
       {itemCount > 0 ? (
         <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 px-4 md:bottom-6">
-          <div className="mx-auto flex max-w-lg items-center justify-between gap-3 rounded-card border border-line bg-white p-2.5 pl-4 shadow-float">
+          <div className="mx-auto flex max-w-lg items-center justify-between gap-3 rounded-card bg-white p-2.5 pl-4 shadow-float">
             <div className="min-w-0">
-              <p className="text-xs text-muted">
+              <p className="text-small text-muted">
                 {itemCount} item &middot; {currentStand?.stand_name}
               </p>
-              <p className="tnum text-sm font-bold text-ink">{formatRupiah(subtotal)}</p>
+              <p className="tnum text-[15px] font-bold text-ink">{formatRupiah(subtotal)}</p>
             </div>
             <Button type="button" onClick={() => setSheetOpen(true)}>
               <ShoppingBag size={18} />
@@ -368,7 +368,7 @@ export function MenuCatalog({
               {error ? (
                 <p
                   role="alert"
-                  className="flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-sm text-danger-600"
+                  className="flex items-start gap-2 rounded-control bg-danger-50 px-3 py-2.5 text-[15px] text-danger-600"
                 >
                   <AlertCircle size={17} className="mt-0.5 shrink-0" />
                   {error}
@@ -376,8 +376,8 @@ export function MenuCatalog({
               ) : null}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted">Total dibayar di kantin</p>
-                  <p className="tnum text-lg font-bold text-ink">{formatRupiah(net)}</p>
+                  <p className="text-small text-muted">Total dibayar di kantin</p>
+                  <p className="tnum text-[17px] font-bold text-ink">{formatRupiah(net)}</p>
                 </div>
                 <Button
                   type="button"
@@ -399,11 +399,11 @@ export function MenuCatalog({
             {/* Item + catatan per item */}
             <ul className="space-y-3">
               {cartLines.map((line) => (
-                <li key={line.item.id} className="rounded-control border border-line p-3">
+                <li key={line.item.id} className="rounded-control bg-mint p-3.5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-ink">{line.item.name}</p>
-                      <p className="tnum text-xs text-muted">
+                      <p className="truncate text-[15px] font-semibold text-ink">{line.item.name}</p>
+                      <p className="tnum text-small text-muted">
                         {formatRupiah(line.item.price_idr)} &times; {line.qty}
                       </p>
                     </div>
@@ -412,16 +412,16 @@ export function MenuCatalog({
                         type="button"
                         onClick={() => decreaseItem(line.item.id)}
                         aria-label={`Kurangi ${line.item.name}`}
-                        className="grid h-10 w-10 place-items-center rounded-control border border-line hover:bg-mint"
+                        className="grid h-10 w-10 place-items-center rounded-control hover:bg-mint"
                       >
                         <Minus size={15} />
                       </button>
-                      <span className="tnum w-6 text-center text-sm font-bold">{line.qty}</span>
+                      <span className="tnum w-6 text-center text-[15px] font-bold">{line.qty}</span>
                       <button
                         type="button"
                         onClick={() => addItem(line.item.id)}
                         aria-label={`Tambah ${line.item.name}`}
-                        className="grid h-10 w-10 place-items-center rounded-control border border-line hover:bg-mint"
+                        className="grid h-10 w-10 place-items-center rounded-control hover:bg-mint"
                       >
                         <Plus size={15} />
                       </button>
@@ -440,7 +440,7 @@ export function MenuCatalog({
                     value={line.notes}
                     onChange={(event) => setItemNotes(line.item.id, event.target.value)}
                     placeholder="Catatan item, mis. pedas sedang"
-                    className="mt-2.5 w-full rounded-control border border-line bg-white px-3 py-2 text-sm placeholder:text-muted/70 focus:border-eco-500 focus:outline-none focus:ring-2 focus:ring-eco-500/25"
+                    className="mt-2.5 w-full rounded-control bg-mint px-3 py-2.5 text-[15px] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-eco-500/30"
                   />
                 </li>
               ))}
@@ -448,7 +448,7 @@ export function MenuCatalog({
 
             {/* Slot pengambilan */}
             <div>
-              <span className="mb-1.5 block text-sm font-semibold text-ink-soft">
+              <span className="mb-1.5 block text-[15px] font-semibold text-ink-soft">
                 Slot pengambilan
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -459,10 +459,10 @@ export function MenuCatalog({
                     aria-pressed={slot === option}
                     onClick={() => setSlot(option)}
                     className={cn(
-                      "h-11 rounded-control border text-sm font-semibold transition-colors",
+                      "h-11 rounded-full text-[15px] font-semibold transition-colors",
                       slot === option
                         ? "border-eco-600 bg-eco-600 text-white"
-                        : "border-line bg-white text-ink-soft hover:bg-mint",
+                        : "bg-white text-ink-soft hover:bg-mint",
                     )}
                   >
                     {option}
@@ -489,7 +489,7 @@ export function MenuCatalog({
             {/* Tukar poin */}
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-ink-soft">Tukar poin</span>
+                <span className="text-[15px] font-semibold text-ink-soft">Tukar poin</span>
                 <Badge tone="amber">{pointsBalance} P tersedia</Badge>
               </div>
               <div className="mt-2 space-y-2">
@@ -498,10 +498,10 @@ export function MenuCatalog({
                   aria-pressed={voucherPoints === 0}
                   onClick={() => setVoucherPoints(0)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-control border px-3 py-2.5 text-sm transition-colors",
+                    "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
                     voucherPoints === 0
                       ? "border-eco-600 bg-eco-50"
-                      : "border-line bg-white hover:bg-mint",
+                      : "bg-white hover:bg-mint",
                   )}
                 >
                   <span className="font-semibold text-ink">Tanpa tukar poin</span>
@@ -519,10 +519,10 @@ export function MenuCatalog({
                       aria-pressed={active}
                       onClick={() => setVoucherPoints(tier.points_cost)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-control border px-3 py-2.5 text-sm transition-colors",
+                        "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
                         active
                           ? "border-eco-600 bg-eco-50"
-                          : "border-line bg-white hover:bg-mint",
+                          : "bg-white hover:bg-mint",
                         !enough && "cursor-not-allowed opacity-50 hover:bg-white",
                       )}
                     >
@@ -536,13 +536,13 @@ export function MenuCatalog({
                   );
                 })}
               </div>
-              <p className="mt-1.5 text-xs text-muted">
+              <p className="mt-1.5 text-small text-muted">
                 Poin dipotong otomatis setelah pesanan dibuat.
               </p>
             </div>
 
             {/* Ringkasan */}
-            <dl className="space-y-1.5 border-t border-line pt-3 text-sm">
+            <dl className="space-y-1.5 pt-3 text-[15px]">
               <div className="flex justify-between text-muted">
                 <dt>Subtotal</dt>
                 <dd className="tnum">{formatRupiah(subtotal)}</dd>

@@ -1,246 +1,524 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ClipboardCheck,
-  CreditCard,
-  QrCode,
-  Recycle,
-  ScanLine,
-  ShoppingBag,
-  Trophy,
-} from "lucide-react";
-import { BrandMark } from "@/components/layout/BrandMark";
+import { ArrowRight } from "lucide-react";
+import { LoopMotif } from "@/components/art/LoopMotif";
+import { HeroDevice } from "@/components/public/HeroDevice";
+import { PointSimulator } from "@/components/public/PointSimulator";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import { PublicNav } from "@/components/public/PublicNav";
 import { buttonStyles } from "@/components/ui/Button";
-import { ImpactStatsGrid } from "@/components/leaderboard/ImpactStatsGrid";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { unwrap } from "@/lib/query";
-import { ROLE_HOME, ROUTE } from "@/lib/constants";
-import { formatKg } from "@/lib/format";
-import type { ClassLeaderboardRow, ImpactStats } from "@/types/database";
+import { CO2E_FACTOR_PER_KG, ROLE_HOME, ROUTE } from "@/lib/constants";
+import { formatKg, formatNumber, formatRupiah } from "@/lib/format";
+import type {
+  ClassLeaderboardRow,
+  ImpactStats,
+  MenuItem,
+  VoucherTier,
+  WasteItemType,
+} from "@/types/database";
 
 export const metadata: Metadata = { title: "Beranda" };
 export const revalidate = 0;
 
-const MODULES = [
+const NAV_LINKS = [
+  { label: "Modul", href: "#modul" },
+  { label: "Hitung poin", href: "#hitung" },
+  { label: "Cara kerja", href: "#cara-kerja" },
+];
+
+/** Tiga langkah nyata dari alur setoran sampai pengambilan pesanan. */
+const STEPS = [
   {
-    icon: Recycle,
-    title: "Bank Sampah berbasis poin",
-    body: "Siswa menyetor sampah yang akan diverifikasi petugas, lalu saldo poin dan total kilogram tercatat otomatis di akun siswa.",
-    points: [
-      "QR pribadi siswa dipindai petugas untuk membuka setoran",
-      "Jenis sampah dan berat menentukan poin yang masuk",
-      "Setoran langsung menambah saldo poin dan total kilogram",
-    ],
+    title: "Tunjukkan QR pribadi",
+    body: "Setiap siswa punya satu kode QR tetap di halaman QR Saya. Tidak perlu kartu fisik, tidak perlu mencatat nomor.",
   },
   {
-    icon: ShoppingBag,
-    title: "Pre-Order Kantin Pintar",
-    body: "Siswa memesan lebih dulu sesuai slot jam istirahat, lalu mengambil pesanan dengan menunjukkan kode booking.",
-    points: [
-      "Pesanan dipisah per slot Istirahat 1 dan Istirahat 2",
-      "Poin dapat ditukar jadi potongan harga di checkout",
-      "Penjual memverifikasi tiket sebelum pesanan diserahkan",
-    ],
+    title: "Petugas menimbang, poin masuk",
+    body: "Petugas memindai QR, memilih jenis sampah, lalu menimbangnya. Saldo poin dan total kilogram langsung bertambah di akun siswa, dan setoran itu ikut terhitung untuk kelasnya.",
+  },
+  {
+    title: "Poin jadi potongan harga di kantin",
+    body: "Saat memesan, poin ditukar jadi voucher. Pesanan diambil di jam istirahat dengan menunjukkan kode booking ke penjual.",
   },
 ];
+
+/** Kelas masuk untuk elemen hero; jeda dibuat bertahap supaya terasa menyusun. */
+const ENTER = "animate-fade-up";
+const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
 export default async function HomePage() {
   const session = await getSessionProfile();
   if (session) redirect(ROLE_HOME[session.profile.role]);
 
   const supabase = await createClient();
-  const [leaderboardRows, impactData] = await Promise.all([
+  const [leaderboardResult, impactResult, wasteResult, tierResult, menuResult] = await Promise.all([
     supabase.rpc("get_class_leaderboard"),
     supabase.rpc("get_impact_stats"),
+    supabase
+      .from("waste_item_types")
+      .select("*")
+      .eq("is_active", true)
+      .order("points_per_kg", { ascending: false }),
+    supabase.from("voucher_tiers").select("*").eq("is_active", true).order("points_cost"),
+    supabase
+      .from("menu_items")
+      .select("*")
+      .eq("is_available", true)
+      .order("price_idr", { ascending: false }),
   ]);
 
-  const rows = unwrap(leaderboardRows) as ClassLeaderboardRow[];
-  const stats = unwrap(impactData) as ImpactStats;
+  const rows = unwrap(leaderboardResult) as ClassLeaderboardRow[];
+  const stats = unwrap(impactResult) as ImpactStats;
+  const wasteTypes = unwrap(wasteResult) as WasteItemType[];
+  const voucherTiers = unwrap(tierResult) as VoucherTier[];
+  const menuItems = unwrap(menuResult) as MenuItem[];
 
   const top = rows.filter((row) => Number(row.total_kg) > 0).slice(0, 5);
+  const featured = menuItems[0] ?? null;
+  const hasDeposits = Number(stats.deposits) > 0;
 
   return (
     <div className="min-h-dvh bg-mint">
-      <header className="rounded-b-header bg-eco-600 px-4 pb-12 pt-5 sm:px-6">
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="flex items-center justify-between gap-3">
-            <BrandMark tone="light" />
-            <nav aria-label="Navigasi publik" className="flex items-center gap-1">
-              <Link
-                href={ROUTE.leaderboard}
-                className="inline-flex h-11 items-center rounded-control px-3 text-sm font-semibold text-white/90 transition-colors hover:bg-white/15 hover:text-white"
-              >
-                Papan Skor
-              </Link>
-              <Link href={ROUTE.login} className={buttonStyles("onDark", "sm")}>
-                Masuk
-              </Link>
-            </nav>
+      {/* Bab 1 - hero, bidang terdalam. Bentuk termotif dipotong tepi kanan. */}
+      <section className="field on-field bg-eco-900 text-white">
+        <LoopMotif className="pointer-events-none absolute -right-[38%] -top-[24%] h-[40rem] w-[40rem] text-eco-600/35 sm:-right-[20%] sm:h-[46rem] sm:w-[46rem] lg:top-1/2 lg:h-[52rem] lg:w-[52rem] lg:-translate-y-1/2 lg:translate-x-[20%]" />
+
+        <div className="page-x relative pb-16 pt-6 sm:pb-20">
+          <div className={ENTER} style={delay(0)}>
+            <PublicNav links={NAV_LINKS} />
           </div>
 
-          <div className="mt-12 max-w-2xl">
-            <h1 className="text-3xl font-bold leading-[1.15] text-white sm:text-[40px]">
-              Sampah jadi poin, kantin tanpa antre.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/85">
-              SKAMUDA EcoHub menyatukan Bank Sampah berbasis poin dan Pre-Order Kantin Pintar
-              dalam satu aplikasi untuk seluruh warga SMKN 1 Murung Pudak.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-2.5">
-              <Link href={ROUTE.register} className={buttonStyles("onDark")}>
-                Daftar akun siswa
-              </Link>
-              <Link href={ROUTE.login} className={buttonStyles("outlineDark")}>
-                Saya sudah punya akun
-              </Link>
+          <h1
+            className={`${ENTER} mt-12 max-w-[22ch] text-display font-extrabold lg:mt-14`}
+            style={delay(60)}
+          >
+            Sampah jadi poin,
+            <br />
+            kantin tanpa antre.
+          </h1>
+
+          <div className="mt-12 grid items-start gap-12 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-6">
+              <p
+                className={`${ENTER} max-w-xl text-[17px] leading-relaxed text-white/80`}
+                style={delay(140)}
+              >
+                SKAMUDA EcoHub menyatukan Bank Sampah berbasis poin dan Pre-Order Kantin Pintar
+                dalam satu aplikasi untuk seluruh warga SMKN 1 Murung Pudak. Satu saldo, dipakai
+                langsung di kantin.
+              </p>
+
+              <div
+                className={`${ENTER} mt-9 flex flex-wrap items-center gap-x-6 gap-y-3`}
+                style={delay(220)}
+              >
+                <Link href={ROUTE.register} className={buttonStyles("onDark")}>
+                  Daftar akun siswa
+                </Link>
+                <Link
+                  href={ROUTE.leaderboard}
+                  className="inline-flex h-11 items-center gap-1.5 text-[17px] font-semibold text-white/85 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
+                >
+                  Lihat papan skor kelas
+                  <ArrowRight size={16} aria-hidden />
+                </Link>
+              </div>
+            </div>
+
+            <div
+              className={`${ENTER} relative flex items-end justify-center gap-1 sm:gap-4 lg:col-span-6 lg:justify-end`}
+              style={delay(320)}
+            >
+              <Image
+                src="/images/leaf-sprig.svg"
+                alt=""
+                width={220}
+                height={320}
+                className="animate-drift pointer-events-none absolute -left-2 bottom-4 z-30 hidden w-[92px] sm:block lg:w-[112px]"
+              />
+              <Image
+                src="/images/waste-bank.svg"
+                alt=""
+                width={560}
+                height={600}
+                priority
+                className="relative z-0 hidden w-[176px] shrink-0 sm:block lg:w-[212px]"
+              />
+              <div className="relative z-10">
+                <HeroDevice
+                  stats={stats}
+                  dish={featured ? { name: featured.name, price_idr: featured.price_idr } : null}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
-        <section className="-mt-6 rounded-card border border-line bg-white p-4 sm:p-5">
-          <div className="flex items-center gap-2">
-            <Trophy size={18} className="text-eco-700" />
-            <h2 className="text-[15px] font-semibold text-ink">Dampak lingkungan saat ini</h2>
-          </div>
-          <div className="mt-4">
-            <ImpactStatsGrid stats={stats} />
-          </div>
-        </section>
+      {/* Bab 2 - dampak. Satu angka memiliki layar, jadi angka itu sendiri judulnya. */}
+      <section className="field bg-white" aria-labelledby="dampak">
+        <Image
+          src="/images/leaf-sprig.svg"
+          alt=""
+          width={220}
+          height={320}
+          className="animate-drift pointer-events-none absolute -top-6 right-2 w-[130px] opacity-25 sm:w-[170px] lg:right-10"
+        />
+        <div className="page-x grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-16">
+          <div>
+            <h2 id="dampak" className="flex flex-wrap items-baseline gap-x-4">
+              <span className="tnum text-[clamp(4rem,10vw,8.5rem)] font-extrabold leading-[0.85] text-eco-700">
+                {formatNumber(stats.total_kg, 2)}
+              </span>
+              <span className="text-item font-bold text-eco-700">kg</span>
+            </h2>
 
-        <section className="mt-10" aria-labelledby="modul">
-          <h2 id="modul" className="text-xl font-bold text-ink">
-            Dua modul, satu alur
+            <p className="reveal mt-8 max-w-xl text-[17px] leading-relaxed text-ink-soft">
+              Itu dampak yang sudah tercatat: total sampah yang ditimbang dan diverifikasi petugas
+              sejak sistem ini dipakai.{" "}
+              {hasDeposits
+                ? "Angkanya bertambah setiap kali ada setoran baru."
+                : "Setoran pertama akan langsung muncul di sini dan di papan skor."}
+            </p>
+
+            <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-3">
+              <div className="reveal">
+                <p className="tnum text-[26px] font-bold text-ink">
+                  {formatNumber(stats.total_points)}
+                </p>
+                <p className="mt-1.5 text-small font-semibold text-muted">Poin beredar</p>
+              </div>
+              <div className="reveal" data-i="1">
+                <p className="tnum text-[26px] font-bold text-ink">
+                  {formatNumber(stats.co2e_kg, 1)} kg
+                </p>
+                <p className="mt-1.5 text-small font-semibold text-muted">Estimasi reduksi CO2e</p>
+              </div>
+              <div className="reveal" data-i="2">
+                <p className="tnum text-[26px] font-bold text-ink">
+                  {formatNumber(stats.deposits)}
+                </p>
+                <p className="mt-1.5 text-small font-semibold text-muted">Setoran diverifikasi</p>
+              </div>
+            </div>
+
+            <p className="reveal mt-8 max-w-xl text-small leading-relaxed text-muted" data-i="2">
+              Estimasi CO2e memakai satu faktor saja: {formatNumber(CO2E_FACTOR_PER_KG, 1)} kg CO2e
+              per kg sampah.
+            </p>
+          </div>
+
+          <div className="reveal" data-i="1">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-card">
+              <Image
+                src="/images/photos/sempervivum-montanum-close-up.jpg"
+                alt="Daun hijau rapat dari tanaman sukulen, tumbuh melekat di tanah."
+                fill
+                sizes="(min-width: 1024px) 46vw, 100vw"
+                className="animate-slow-zoom object-cover"
+              />
+            </div>
+            <p className="mt-3 text-small text-muted">
+              Daun, bukan sampah: bagian yang paling sering dilupakan dari kata daur ulang.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Bab 3 - dua modul pada skala poster */}
+      <section className="field bg-mint-deep" aria-labelledby="modul">
+        <Image
+          src="/images/leaf-sprig.svg"
+          alt=""
+          width={220}
+          height={320}
+          className="animate-drift pointer-events-none absolute -bottom-8 -left-8 w-[160px] opacity-20 sm:w-[200px]"
+          style={{ animationDelay: "-3s" }}
+        />
+        <div className="page-x py-16 sm:py-20">
+          <h2 id="modul" className="reveal text-chapter max-w-[18ch] font-extrabold text-ink">
+            Dua modul, satu saldo
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            Poin dari sampah dipakai langsung di kantin. Tidak ada saldo terpisah, tidak ada
+          <p className="reveal mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-i="1">
+            Poin dari sampah dipakai langsung di kantin. Tidak ada saldo terpisah dan tidak ada
             pencatatan manual.
           </p>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            {MODULES.map((modul) => {
-              const Icon = modul.icon;
-              return (
-                <article key={modul.title} className="rounded-card border border-line bg-white p-5">
-                  <span className="grid h-11 w-11 place-items-center rounded-control bg-eco-50 text-eco-700">
-                    <Icon size={22} />
-                  </span>
-                  <h3 className="mt-4 text-[17px] font-semibold text-ink">{modul.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">{modul.body}</p>
-                  <ul className="mt-4 space-y-2.5">
-                    {modul.points.map((point) => (
-                      <li key={point} className="flex gap-2.5 text-sm text-ink-soft">
-                        <ClipboardCheck size={17} className="mt-0.5 shrink-0 text-eco-600" />
-                        <span className="leading-snug">{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mt-10" aria-labelledby="alur">
-          <h2 id="alur" className="text-xl font-bold text-ink">
-            Bagaimana penggunaannya
-          </h2>
-          <ol className="mt-5 grid gap-4 md:grid-cols-3">
-            {[
-              {
-                icon: QrCode,
-                title: "Siswa tunjukkan QR",
-                body: "Setiap siswa punya QR pribadi di halaman QR Saya.",
-              },
-              {
-                icon: ScanLine,
-                title: "Petugas memindai",
-                body: "Petugas memindai QR, memasukkan jenis dan berat sampah, poin langsung masuk.",
-              },
-              {
-                icon: CreditCard,
-                title: "Poin dipakai di kantin",
-                body: "Poin ditukar jadi potongan harga saat memesan, pesanan siap di jam istirahat.",
-              },
-            ].map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <li key={step.title} className="flex gap-3 rounded-card border border-line bg-white p-4">
-                  <span className="tnum grid h-9 w-9 shrink-0 place-items-center rounded-control bg-mint text-sm font-bold text-ink-soft">
-                    {index + 1}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Icon size={16} className="text-eco-700" />
-                      <h3 className="text-sm font-semibold text-ink">{step.title}</h3>
-                    </div>
-                    <p className="mt-1 text-sm leading-snug text-muted">{step.body}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-
-        <section className="mt-10" aria-labelledby="klasemen">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h2 id="klasemen" className="text-xl font-bold text-ink">
-                Klasemen kelas
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                Diurutkan dari total kilogram sampah yang didaur ulang.
+          <article className="mt-14 grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+            <div className="reveal order-2 lg:order-1">
+              <h3 className="text-item font-extrabold text-ink">Bank Sampah berbasis poin</h3>
+              <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-soft">
+                Siswa menyetorkan sampah yang sudah dipilah, petugas menimbangnya, lalu saldo poin
+                dan total kilogram tercatat otomatis. Tidak ada buku catatan dan tidak ada rekap
+                ulang.
               </p>
-            </div>
-            <Link
-              href={ROUTE.leaderboard}
-              className="text-sm font-semibold text-eco-700 hover:underline"
-            >
-              Lihat semua kelas
-            </Link>
-          </div>
 
-          <div className="mt-4">
-            {top.length === 0 ? (
-              <p className="rounded-card border border-dashed border-line bg-white px-4 py-6 text-center text-sm text-muted">
-                Belum ada setoran sampah tercatat. Klasemen akan terisi setelah petugas memproses
-                setoran pertama.
-              </p>
-            ) : (
-              <ol className="overflow-hidden rounded-card border border-line bg-white">
-                {top.map((row, index) => (
-                  <li
-                    key={row.class_name}
-                    className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0"
+              <dl className="mt-8 space-y-3.5">
+                {wasteTypes.map((type, index) => (
+                  <div
+                    key={type.code}
+                    className="reveal flex items-baseline justify-between gap-6"
+                    data-i={index || undefined}
                   >
-                    <span className="tnum grid h-8 w-8 shrink-0 place-items-center rounded-control bg-eco-600 text-sm font-bold text-white">
-                      {index + 1}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                      {row.class_name}
-                    </span>
-                    <span className="tnum text-sm font-bold text-ink">
-                      {formatKg(row.total_kg)}
-                    </span>
+                    <dt className="text-[17px] text-ink-soft">{type.label}</dt>
+                    <dd className="tnum text-[17px] font-bold text-eco-700">
+                      {formatNumber(type.points_per_kg)} poin / {type.unit_label}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="reveal order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none" data-i="1">
+              <div className="rounded-full bg-eco-100/70 p-6 sm:p-10">
+                <Image
+                  src="/images/waste-bank.svg"
+                  alt=""
+                  width={560}
+                  height={600}
+                  className="mx-auto w-full max-w-[380px]"
+                />
+              </div>
+            </div>
+          </article>
+
+          <div className="reveal mt-14 grid gap-8 sm:grid-cols-2">
+            <figure>
+              <div className="relative aspect-[3/2] overflow-hidden rounded-card">
+                <Image
+                  src="/images/photos/waste-plastic-bottles.jpg"
+                  alt="Pekerja mengangkat karung berisi botol plastik bekas ke atas truk pengangkut."
+                  fill
+                  sizes="(min-width: 640px) 46vw, 100vw"
+                  className="animate-slow-zoom object-cover"
+                />
+              </div>
+              <figcaption className="mt-3 text-small text-muted">
+                Botol plastik hampir selalu jadi setoran terbanyak. Bilas dulu, lepas tutupnya.
+              </figcaption>
+            </figure>
+            <figure>
+              <div className="relative aspect-[3/2] overflow-hidden rounded-card">
+                <Image
+                  src="/images/photos/57-cardboard-waste-pile-for-recycling-collection.jpg"
+                  alt="Tumpukan kardus bekas yang dilipat rata, siap disetor."
+                  fill
+                  sizes="(min-width: 640px) 46vw, 100vw"
+                  className="animate-slow-zoom object-cover"
+                />
+              </div>
+              <figcaption className="mt-3 text-small text-muted">
+                Kardus dilipat dulu supaya satu setoran bisa membawa lebih banyak berat.
+              </figcaption>
+            </figure>
+          </div>
+
+          <article className="mt-16 grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+            <div className="reveal mx-auto w-full max-w-md lg:max-w-none">
+              <div className="rounded-full bg-white p-6 sm:p-10">
+                <Image
+                  src="/images/canteen-bowl.svg"
+                  alt=""
+                  width={480}
+                  height={480}
+                  className="mx-auto w-full max-w-[360px]"
+                />
+              </div>
+            </div>
+
+            <div className="reveal" data-i="1">
+              <h3 className="text-item font-extrabold text-ink">Pre-Order Kantin Pintar</h3>
+              <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-soft">
+                Pesanan dibuat sebelum istirahat dan dipisah per slot pengambilan, supaya tidak
+                menumpuk di satu jam istirahat. Penjual menyiapkan sesuai urutan, siswa tinggal
+                mengambil.
+              </p>
+
+              {featured ? (
+                <div className="mt-8 rounded-card bg-white px-5 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[17px] font-bold text-ink">{featured.name}</p>
+                      <p className="mt-1 text-small text-muted">Contoh menu yang sedang dijual</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="tnum text-[17px] font-bold text-ink">
+                        {formatRupiah(featured.price_idr)}
+                      </p>
+                      <p className="tnum text-small font-semibold text-eco-700">
+                        {formatNumber(featured.points_price ?? 0)} poin
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              <ul className="mt-8 space-y-4 text-[17px] leading-relaxed text-ink-soft">
+                {[
+                  "Slot tetap Istirahat 1 dan Istirahat 2, dipilih saat memesan.",
+                  "Catatan untuk seluruh pesanan dan untuk tiap item, sampai tanpa sambal.",
+                  "Kode booking dipakai penjual untuk memverifikasi sebelum pesanan diserahkan.",
+                ].map((point) => (
+                  <li key={point} className="flex gap-3.5">
+                    <span
+                      aria-hidden
+                      className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-eco-500"
+                    />
+                    {point}
                   </li>
                 ))}
-              </ol>
-            )}
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t border-line bg-white px-4 py-8 sm:px-6">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3">
-          <BrandMark />
-          <p className="text-xs text-muted">
-            Ekosistem digital SMKN 1 Murung Pudak.
-          </p>
+              </ul>
+            </div>
+          </article>
         </div>
-      </footer>
+      </section>
+
+      {/* Bab 4 - alat hitung, satu-satunya hal interaktif di halaman ini */}
+      <section className="field bg-white" aria-labelledby="hitung">
+        <div className="page-x py-16 sm:py-20">
+          <h2 id="hitung" className="reveal text-chapter max-w-[22ch] font-extrabold text-ink">
+            Hitung sendiri sebelum menyetor
+          </h2>
+          <p className="reveal mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-i="1">
+            Pilih jenis sampah dan beratnya. Tarif, voucher, dan harga menu di bawah ini dibaca
+            langsung dari data kantin yang sedang berjalan.
+          </p>
+
+          <div className="reveal mt-12" data-i="2">
+            <PointSimulator
+              wasteTypes={wasteTypes}
+              voucherTiers={voucherTiers}
+              menuItems={menuItems}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Bab 5 - cara kerja, sebagai daftar bertipe besar, bukan kartu kembar */}
+      <section className="field bg-eco-50" aria-labelledby="cara-kerja">
+        <div className="page-x grid gap-12 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="reveal">
+            <LoopMotif
+              strokeWidth={34}
+              className="h-16 w-16 text-eco-600"
+            />
+            <h2 id="cara-kerja" className="mt-8 text-chapter max-w-[14ch] font-extrabold text-ink">
+              Tiga langkah, berulang
+            </h2>
+            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-ink-soft">
+              Alurnya sama setiap minggu, dan berputar kembali: sampah keluar dari kelas, poin masuk
+              ke akun, makanan kembali ke meja.
+            </p>
+          </div>
+
+          <ol className="space-y-10">
+            {STEPS.map((step, index) => (
+              <li key={step.title} className="reveal grid gap-2 sm:grid-cols-[auto_1fr] sm:gap-8" data-i={index || undefined}>
+                <span className="tnum text-[26px] font-extrabold leading-none text-eco-300">
+                  {index + 1}
+                </span>
+                <div>
+                  <h3 className="text-item font-bold text-ink">{step.title}</h3>
+                  <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-ink-soft">
+                    {step.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Bab 6 - klasemen, bidang gelap lagi */}
+      <section className="field on-field bg-eco-900 text-white" aria-labelledby="klasemen">
+        <Image
+          src="/images/leaf-sprig.svg"
+          alt=""
+          width={220}
+          height={320}
+          className="animate-drift pointer-events-none absolute -top-8 right-0 w-[140px] opacity-20 sm:w-[180px] lg:right-6"
+          style={{ animationDelay: "-6s" }}
+        />
+        <div className="page-x py-16 sm:py-20">
+          <h2 id="klasemen" className="reveal text-chapter max-w-[16ch] font-extrabold">
+            Setiap kilogram dihitung
+          </h2>
+          <p className="reveal mt-5 max-w-xl text-[17px] leading-relaxed text-white/75" data-i="1">
+            Klasemen diurutkan dari total kilogram yang sudah diverifikasi, jadi satu kelas bisa
+            disalip dengan setoran yang lebih berat, bukan dengan jumlah setoran yang lebih banyak.
+          </p>
+
+          {top.length === 0 ? (
+            <p className="reveal mt-12 max-w-xl text-[17px] leading-relaxed text-white/80">
+              Belum ada setoran yang tercatat. Klasemen akan terisi begitu petugas memverifikasi
+              setoran pertama.
+            </p>
+          ) : (
+            <ol className="mt-12 space-y-8">
+              {top.map((row, index) => (
+                <li
+                  key={row.class_name}
+                  className="reveal flex items-center gap-5 sm:gap-8"
+                  data-i={index || undefined}
+                >
+                  <span className="tnum w-7 shrink-0 text-[26px] font-extrabold leading-none text-white/45">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[17px] font-bold text-white">
+                      {row.class_name}
+                    </span>
+                    <span className="tnum mt-1 block text-small text-white/60">
+                      {formatNumber(row.students)} siswa, {formatNumber(row.total_points)} poin
+                    </span>
+                  </span>
+                  <span className="tnum shrink-0 text-item font-extrabold text-white">
+                    {formatKg(row.total_kg)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+
+          <Link
+            href={ROUTE.leaderboard}
+            className="mt-12 inline-flex h-11 items-center gap-2 text-[17px] font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white"
+          >
+            Lihat semua kelas
+            <ArrowRight size={16} aria-hidden />
+          </Link>
+        </div>
+      </section>
+
+      {/* Bab 7 - satu kata adalah tombolnya */}
+      <section className="field on-field bg-eco-600 text-white">
+        <Link
+          href={ROUTE.register}
+          aria-label="Daftar akun siswa SKAMUDA EcoHub"
+          className="page-x group block py-16 text-center transition-colors hover:bg-eco-700 sm:py-20"
+        >
+          <span className="reveal block text-[17px] font-semibold text-white/85">
+            Gratis untuk siswa SMKN 1 Murung Pudak. Cukup satu email.
+          </span>
+          <span
+            className="reveal mt-4 block text-[clamp(3.5rem,14vw,11rem)] font-extrabold leading-[0.9] tracking-[-0.04em]"
+            data-i="1"
+          >
+            Daftar
+            <ArrowRight
+              aria-hidden
+              className="ml-3 inline-block h-[0.62em] w-[0.62em] transition-transform group-hover:translate-x-2"
+            />
+          </span>
+        </Link>
+      </section>
+
+      <PublicFooter />
     </div>
   );
 }

@@ -50,10 +50,10 @@ export function StudentOrderList({ orders }: { orders: StudentOrder[] }) {
             aria-selected={filter === tab.key}
             onClick={() => setFilter(tab.key)}
             className={cn(
-              "h-10 rounded-control border px-3 text-sm font-semibold transition-colors",
+              "h-10 rounded-full px-4 text-[15px] font-semibold transition-colors",
               filter === tab.key
                 ? "border-eco-600 bg-eco-600 text-white"
-                : "border-line bg-white text-ink-soft hover:bg-mint",
+                : "bg-white text-ink-soft hover:bg-mint",
             )}
           >
             {tab.label}
@@ -79,23 +79,23 @@ export function StudentOrderList({ orders }: { orders: StudentOrder[] }) {
               const meta = ORDER_STATUS_META[order.status];
               const net = order.total_price - order.discount_applied;
               return (
-                <li key={order.id} className="rounded-card border border-line bg-white p-4">
+                <li key={order.id} className="rounded-card bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 text-eco-700">
                         <Store size={16} />
-                        <span className="truncate text-sm font-semibold">
+                        <span className="truncate text-[15px] font-semibold">
                           {order.stand_name ?? "Kantin"}
                         </span>
                       </div>
-                      <p className="tnum mt-1 text-base font-bold text-ink">
+                      <p className="tnum mt-1 text-[17px] font-bold text-ink">
                         {order.booking_code}
                       </p>
                     </div>
                     <Badge tone={STATUS_TONE[order.status]}>{meta.label}</Badge>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-small text-muted">
                     <span className="inline-flex items-center gap-1">
                       <Clock3 size={14} /> {order.pickup_time_slot}
                     </span>

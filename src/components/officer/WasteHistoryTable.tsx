@@ -43,7 +43,7 @@ export function WasteHistoryTable({ rows }: { rows: WasteHistoryRow[] }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted">
+        <p className="text-[15px] text-ink-soft">
           {formatNumber(rows.length)} transaksi terakhir
         </p>
         <Button type="button" variant="secondary" size="sm" onClick={exportCsv} disabled={rows.length === 0}>
@@ -52,10 +52,10 @@ export function WasteHistoryTable({ rows }: { rows: WasteHistoryRow[] }) {
         </Button>
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-card border border-line bg-white">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+      <div className="mt-4 overflow-x-auto rounded-card bg-white">
+        <table className="w-full min-w-[720px] border-collapse text-[15px]">
           <thead>
-            <tr className="border-b border-line bg-mint text-left text-xs uppercase tracking-wide text-muted">
+            <tr className="bg-mint text-left text-small text-muted">
               <th scope="col" className="px-4 py-3 font-semibold">Tanggal</th>
               <th scope="col" className="px-4 py-3 font-semibold">Nama Siswa</th>
               <th scope="col" className="px-4 py-3 font-semibold">Kelas</th>

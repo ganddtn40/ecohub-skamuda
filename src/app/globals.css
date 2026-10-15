@@ -5,24 +5,32 @@
 @layer base {
   :root {
     color-scheme: light;
+    /* Panjang busur motif loop, dipakai animasi gambar-diri. */
+    --ring-len: 1000;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
     scrollbar-gutter: stable;
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-mint text-ink antialiased;
+    @apply bg-mint text-body text-ink antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overflow-x: hidden;
   }
 
-  /* Visible, consistent keyboard focus (R-32). Never removed without replacement. */
+  /* Fokus keyboard yang terlihat dan konsisten (R-32). */
   :focus-visible {
     outline: 2px solid theme("colors.eco.600");
     outline-offset: 2px;
     border-radius: 4px;
+  }
+
+  /* Di atas bidang gelap, fokus harus terbaca. */
+  .on-field :focus-visible {
+    outline-color: #ffffff;
   }
 
   ::selection {
@@ -34,23 +42,75 @@
   h2,
   h3,
   h4 {
-    @apply font-semibold tracking-[-0.01em];
+    @apply font-semibold;
   }
 
-  /* Numeric data reads cleaner with tabular figures. */
+  /* Angka data selalu rata kolom. */
   .tnum {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
 @layer components {
-  /* A single surface primitive: hairline border, tiny elevation, no blur. */
+  /* Satu pasang margin halaman, dipakai di mana-mana. */
+  .page-x {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  /* Satu bab halaman: bidang warna penuh, sudut siku, tanpa garis pemisah. */
+  .field {
+    @apply relative w-full overflow-hidden;
+  }
+
   .surface {
     @apply rounded-card border border-line bg-white;
   }
 
-  .hairline {
-    @apply border-line;
+  /* Kaca buta untuk teks di atas foto. Satu-satunya pengecualian gradient. */
+  .scrim {
+    background-image: linear-gradient(
+      to top,
+      rgba(5, 29, 17, 0.82) 0%,
+      rgba(5, 29, 17, 0.55) 46%,
+      rgba(5, 29, 17, 0) 100%
+    );
+  }
+}
+
+/*
+ * Pintu masuk tiap bagian halaman: judul, lalu teks, lalu gambar.
+ * Memakai animasi berbasis scroll CSS sehingga tanpa JavaScript pun konten
+ * tetap terlihat penuh (tidak pernah tersembunyi bila skrip gagal), dan
+ * peramban lama hanya kehilangan geraknya.
+ */
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-rise both;
+      animation-timeline: view();
+      animation-range: entry 6% cover 26%;
+    }
+    .reveal[data-i="1"] {
+      animation-range: entry 13% cover 33%;
+    }
+    .reveal[data-i="2"] {
+      animation-range: entry 20% cover 40%;
+    }
+    .reveal[data-i="3"] {
+      animation-range: entry 27% cover 47%;
+    }
   }
 }
 
@@ -61,5 +121,9 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

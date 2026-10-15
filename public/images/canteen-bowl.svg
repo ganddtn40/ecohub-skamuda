@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480" fill="none" role="img" aria-labelledby="trayTitle">
+  <title id="trayTitle">Mangkuk nasi kantin dengan lauk, telur, sayur hijau, dan segelas minuman hijau</title>
+  <style>
+    .ground  { fill: #EAF6EF; }
+    .bowl-d  { fill: #053B22; }
+    .bowl-r  { fill: #086337; }
+    .bowl-i  { fill: #0A7A44; }
+    .rice    { fill: #F7F3E8; }
+    .rice-h  { fill: #FFFDF7; }
+    .prot    { fill: #D98A0B; }
+    .prot-d  { fill: #B45309; }
+    .egg     { fill: #FFFDF7; }
+    .gr-d    { fill: #149057; }
+    .gr      { fill: #3DAA78; }
+    .gr-l    { fill: #74C79E; }
+    .glass   { fill: #D3EEDF; }
+    .juice   { fill: #3DAA78; }
+    .juice-h { fill: #74C79E; }
+    .straw   { fill: #0A7A44; }
+  </style>
+
+  <ellipse class="ground" cx="240" cy="428" rx="196" ry="26" />
+
+  <!-- botanical behind the bowl -->
+  <g class="gr" transform="translate(384 108) rotate(34) scale(1.15)">
+    <path d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+    <path d="M8 0H66" stroke="#053B22" stroke-width="1.6" opacity=".2" />
+  </g>
+  <g class="gr-l" transform="translate(394 152) rotate(58) scale(.8)">
+    <path d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+  </g>
+
+  <!-- bowl, seen slightly from above -->
+  <circle class="bowl-d" cx="232" cy="254" r="170" />
+  <circle class="bowl-r" cx="232" cy="250" r="162" />
+  <circle class="bowl-i" cx="232" cy="252" r="142" />
+  <circle class="rice" cx="232" cy="252" r="132" />
+  <path class="rice-h" d="M120 214C138 178 178 158 220 160C186 168 156 186 140 214C134 226 132 236 132 246C124 236 120 224 120 214Z" />
+
+  <!-- greens -->
+  <g class="gr">
+    <path d="M196 292C196 292 214 258 250 254C256 286 236 306 196 292Z" />
+    <path d="M266 288C266 288 288 262 320 268C318 296 296 310 266 288Z" class="gr-d" />
+  </g>
+  <path class="gr-l" d="M204 286C216 268 226 262 240 258" stroke-width="4" stroke="#74C79E" stroke-linecap="round" opacity=".85" />
+
+  <!-- fried protein, two pieces -->
+  <g transform="rotate(-18 186 186)">
+    <rect class="prot" x="138" y="158" width="96" height="56" rx="26" />
+    <rect class="prot-d" x="138" y="192" width="96" height="20" rx="10" opacity=".4" />
+    <path d="M156 172H216" stroke="#B45309" stroke-width="5" stroke-linecap="round" opacity=".5" />
+  </g>
+  <g transform="rotate(12 268 168)">
+    <rect class="prot" x="232" y="146" width="82" height="48" rx="22" />
+    <rect class="prot-d" x="232" y="176" width="82" height="16" rx="8" opacity=".4" />
+  </g>
+
+  <!-- egg -->
+  <ellipse class="egg" cx="286" cy="238" rx="36" ry="28" />
+  <circle class="prot" cx="288" cy="236" r="15" />
+
+  <!-- sesame -->
+  <g class="prot-d" opacity=".8">
+    <circle cx="176" cy="238" r="3.6" /><circle cx="206" cy="220" r="3.6" />
+    <circle cx="252" cy="212" r="3.6" /><circle cx="222" cy="300" r="3.6" />
+    <circle cx="300" cy="292" r="3.6" /><circle cx="164" cy="272" r="3.6" />
+  </g>
+
+  <!-- glass of green juice -->
+  <path class="glass" d="M368 276H448L440 424A14 14 0 0 1 426 436H390A14 14 0 0 1 376 424Z" />
+  <path class="juice" d="M372 344H444L438 424A14 14 0 0 1 424 434H392A14 14 0 0 1 378 424Z" />
+  <path class="juice-h" d="M372 344H444L442 368H374Z" opacity=".5" />
+  <rect class="straw" x="414" y="212" width="13" height="150" rx="6.5" transform="rotate(10 420 286)" />
+  <ellipse class="glass" cx="408" cy="280" rx="40" ry="13" />
+</svg>

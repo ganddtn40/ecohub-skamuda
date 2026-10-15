@@ -49,8 +49,8 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 grid place-content-center text-center">
-        <span className="tnum text-xl font-bold text-ink">{label}</span>
-        {sublabel ? <span className="text-xs text-muted">{sublabel}</span> : null}
+        <span className="tnum text-[17px] font-bold text-ink">{label}</span>
+        {sublabel ? <span className="text-small text-muted">{sublabel}</span> : null}
       </div>
     </div>
   );

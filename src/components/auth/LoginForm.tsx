@@ -56,18 +56,23 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-card border border-line bg-white p-5 shadow-sm sm:p-6"
+      className="animate-fade-up rounded-card bg-white p-6 sm:p-8"
       noValidate
     >
-      <h1 className="text-xl font-bold text-ink">Masuk ke akunmu</h1>
-      <p className="mt-1 text-sm leading-relaxed text-muted">
+      <h1 className="animate-fade-up text-item font-extrabold text-ink" style={{ animationDelay: "80ms" }}>
+        Masuk ke akunmu
+      </h1>
+      <p
+        className="mt-3 animate-fade-up text-[17px] leading-relaxed text-ink-soft"
+        style={{ animationDelay: "140ms" }}
+      >
         Gunakan email dan kata sandi yang terdaftar di SKAMUDA EcoHub.
       </p>
 
       {error ? (
         <p
           role="alert"
-          className="mt-4 flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-sm text-danger-600"
+          className="mt-5 flex items-start gap-2.5 rounded-control bg-danger-50 px-3.5 py-3 text-small text-danger-600"
         >
           <AlertCircle size={18} className="mt-0.5 shrink-0" />
           {error}
@@ -107,7 +112,7 @@ export function LoginForm() {
         {pending ? "Memeriksa akun..." : "Masuk"}
       </Button>
 
-      <p className="mt-5 text-center text-sm text-muted">
+      <p className="mt-6 text-center text-[15px] text-ink-soft">
         Belum punya akun siswa?{" "}
         <Link href={ROUTE.register} className="font-semibold text-eco-700 hover:underline">
           Daftar di sini

@@ -60,7 +60,7 @@ export function QrCamera({
 
   return (
     <div>
-      <div className="overflow-hidden rounded-control border border-line bg-ink/5">
+      <div className="overflow-hidden rounded-control bg-ink/5">
         {active ? (
           <div id={elementId} className="min-h-[240px] w-full [&_video]:w-full" />
         ) : (
@@ -69,7 +69,7 @@ export function QrCamera({
           </div>
         )}
       </div>
-      {error ? <p className="mt-2 text-sm text-gold-600">{error}</p> : null}
+      {error ? <p className="mt-2 text-[15px] text-gold-600">{error}</p> : null}
     </div>
   );
 }

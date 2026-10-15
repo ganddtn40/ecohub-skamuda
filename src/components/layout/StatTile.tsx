@@ -9,7 +9,14 @@ const ICON_TONES: Record<Tone, string> = {
   neutral: "bg-mint text-ink-soft",
 };
 
-/** Kartu metrik tunggal: ikon, label, nilai besar. */
+/**
+ * Satu angka di dalam pita statistik.
+ *
+ * Sengaja tanpa kotak dan tanpa garis: beberapa angka yang berdampingan
+ * dipisahkan oleh jarak, dan seluruh kelompok duduk di atas satu bidang putih
+ * yang disediakan pemanggilnya. Dengan begitu tidak pernah terbentuk deretan
+ * kartu kembar yang seragam.
+ */
 export function StatTile({
   icon,
   label,
@@ -28,18 +35,18 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-card border border-line bg-white p-4", className)}>
-      <div className="flex items-center gap-2.5">
-        <span className={cn("grid h-9 w-9 place-items-center rounded-control", ICON_TONES[tone])}>
+    <div className={cn("min-w-0", className)}>
+      <p className="flex items-baseline gap-1.5">
+        <span className="tnum text-[26px] font-bold leading-none text-ink">{value}</span>
+        {unit ? <span className="text-small font-semibold text-muted">{unit}</span> : null}
+      </p>
+      <span className="mt-2 flex items-center gap-2 text-small font-semibold text-muted">
+        <span className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full", ICON_TONES[tone])}>
           {icon}
         </span>
-        <span className="text-sm font-semibold text-muted">{label}</span>
-      </div>
-      <p className="mt-3 flex items-baseline gap-1">
-        <span className="tnum text-2xl font-bold leading-none text-ink">{value}</span>
-        {unit ? <span className="text-sm font-semibold text-muted">{unit}</span> : null}
-      </p>
-      {hint ? <p className="mt-1.5 text-xs text-muted">{hint}</p> : null}
+        {label}
+      </span>
+      {hint ? <p className="mt-1.5 text-small text-muted">{hint}</p> : null}
     </div>
   );
 }

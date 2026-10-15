@@ -5,13 +5,13 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "onDa
 export type ButtonSize = "sm" | "md";
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-11 px-3 text-sm",
-  md: "h-12 px-5 text-[15px]",
+  sm: "h-11 px-4 text-[15px]",
+  md: "h-12 px-6 text-[17px]",
 };
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800",
-  secondary: "border border-line bg-white text-ink hover:bg-mint",
+  secondary: "bg-eco-50 text-eco-800 hover:bg-eco-100",
   ghost: "text-eco-700 hover:bg-eco-50",
   danger: "bg-danger-500 text-white hover:bg-danger-600",
   onDark: "bg-white text-eco-700 hover:bg-mint",
@@ -25,7 +25,7 @@ export function buttonStyles(
   className?: string,
 ): string {
   return cn(
-    "inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold",
+    "inline-flex select-none items-center justify-center gap-2 rounded-full font-semibold",
     "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 focus-visible:ring-offset-2",
     "disabled:cursor-not-allowed disabled:opacity-50",
     SIZES[size],

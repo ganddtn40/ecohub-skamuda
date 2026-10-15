@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Coins, QrCode, Recycle, ShoppingBag, Target } from "lucide-react";
+import { ArrowRight, Coins, QrCode, Recycle, ShoppingBag, Target } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
@@ -83,7 +83,7 @@ export default async function StudentDashboard() {
           hint="Sejak akun aktif"
         />
 
-        <div className="flex items-center gap-4 rounded-card border border-line bg-white p-4 sm:col-span-1">
+        <div className="flex items-center gap-4 rounded-card bg-white p-4 sm:col-span-1">
           <ProgressRing
             value={progress}
             label={`${formatNumber(Math.min(progress, 1) * 100)}%`}
@@ -94,67 +94,79 @@ export default async function StudentDashboard() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-eco-700">
               <Target size={16} />
-              <span className="text-sm font-semibold">Target harian</span>
+              <span className="text-small font-semibold">Target harian</span>
             </div>
-            <p className="tnum mt-1 text-lg font-bold text-ink">{formatKg(todayKg)}</p>
-            <p className="text-xs text-muted">
+            <p className="tnum mt-1 text-[26px] font-bold leading-none text-ink">
+              {formatKg(todayKg)}
+            </p>
+            <p className="mt-1.5 text-small text-muted">
               dari target {formatKg(DAILY_RECYCLE_TARGET_KG)}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3" aria-label="Aksi cepat">
-        <Link
-          href={ROUTE.studentQr}
-          className="flex items-center gap-3 rounded-card border border-line bg-white p-4 transition-colors hover:bg-mint"
-        >
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-eco-50 text-eco-700">
-            <QrCode size={22} />
-          </span>
-          <span>
-            <span className="block text-sm font-semibold text-ink">Tampilkan QR setoran</span>
-            <span className="block text-xs text-muted">Untuk dipindai petugas</span>
-          </span>
-        </Link>
-
-        <Link
-          href={ROUTE.studentCanteen}
-          className="flex items-center gap-3 rounded-card border border-line bg-white p-4 transition-colors hover:bg-mint"
-        >
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-eco-50 text-eco-700">
-            <ShoppingBag size={22} />
-          </span>
-          <span>
-            <span className="block text-sm font-semibold text-ink">Pesan di kantin</span>
-            <span className="block text-xs text-muted">Pre-order sesuai jam istirahat</span>
-          </span>
-        </Link>
-
-        <Link
-          href={ROUTE.studentOrders}
-          className="flex items-center gap-3 rounded-card border border-line bg-white p-4 transition-colors hover:bg-mint"
-        >
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-eco-50 text-eco-700">
-            <Coins size={22} />
-          </span>
-          <span>
-            <span className="block text-sm font-semibold text-ink">Pesanan aktif</span>
-            <span className="block text-xs text-muted">
-              {activeOrders > 0 ? `${activeOrders} pesanan menunggu` : "Belum ada pesanan aktif"}
-            </span>
-          </span>
-        </Link>
+      {/* Tiga pintu masuk utama. Satu bidang, tiga baris - bukan tiga kartu kembar. */}
+      <section className="rounded-card bg-white" aria-label="Aksi cepat">
+        <ul>
+          <li>
+            <Link
+              href={ROUTE.studentQr}
+              className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-mint"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-eco-50 text-eco-700">
+                <QrCode size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-bold text-ink">Tampilkan QR setoran</span>
+                <span className="block text-small text-muted">Untuk dipindai petugas</span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-muted" aria-hidden />
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={ROUTE.studentCanteen}
+              className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-mint"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-eco-50 text-eco-700">
+                <ShoppingBag size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-bold text-ink">Pesan di kantin</span>
+                <span className="block text-small text-muted">Pre-order sesuai jam istirahat</span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-muted" aria-hidden />
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={ROUTE.studentOrders}
+              className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-mint"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-eco-50 text-eco-700">
+                <Coins size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-bold text-ink">Pesanan aktif</span>
+                <span className="block text-small text-muted">
+                  {activeOrders > 0 ? `${activeOrders} pesanan menunggu` : "Belum ada pesanan aktif"}
+                </span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-muted" aria-hidden />
+            </Link>
+          </li>
+        </ul>
       </section>
 
       <section aria-labelledby="setoran-terakhir">
         <div className="flex items-end justify-between gap-2">
-          <h2 id="setoran-terakhir" className="text-lg font-bold text-ink">
+          <h2 id="setoran-terakhir" className="text-[26px] font-bold text-ink">
             Setoran terakhir
           </h2>
           <Link
             href={ROUTE.studentHistory}
-            className="text-sm font-semibold text-eco-700 hover:underline"
+            className="text-[15px] font-semibold text-eco-700 hover:underline"
           >
             Lihat semua
           </Link>

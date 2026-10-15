@@ -16,7 +16,7 @@ export function SkeletonList({ rows = 3 }: { rows?: number }) {
       {Array.from({ length: rows }).map((_, index) => (
         <div
           key={index}
-          className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5"
+          className="flex items-center gap-3 rounded-card bg-white p-3.5"
         >
           <Skeleton className="h-10 w-10 rounded-control" />
           <div className="flex-1 space-y-2">

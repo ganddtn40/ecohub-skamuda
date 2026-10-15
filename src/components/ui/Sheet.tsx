@@ -63,16 +63,16 @@ export function Sheet({
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+        <div className="flex items-start justify-between gap-3 bg-mint px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-ink">{title}</h2>
-            {description ? <p className="mt-0.5 text-sm text-muted">{description}</p> : null}
+            <h2 className="text-[17px] font-bold text-ink">{title}</h2>
+            {description ? <p className="mt-0.5 text-[15px] text-muted">{description}</p> : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-control text-muted transition-colors hover:bg-mint hover:text-ink"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-white hover:text-ink"
           >
             <X size={20} />
           </button>
@@ -80,7 +80,7 @@ export function Sheet({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
 
-        {footer ? <div className="border-t border-line px-5 py-4">{footer}</div> : null}
+        {footer ? <div className="bg-mint px-5 py-4">{footer}</div> : null}
       </div>
     </div>
   );

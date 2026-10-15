@@ -76,28 +76,28 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
   }
 
   return (
-    <article className="rounded-card border border-line bg-white p-4">
+    <article className="rounded-card bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <div className="flex items-center gap-2 text-[15px] font-semibold text-ink">
             <User size={15} className="text-eco-700" />
             <span className="truncate">{order.student_name ?? "Siswa"}</span>
           </div>
-          <p className="text-xs text-muted">{order.student_class ?? "Tanpa kelas"}</p>
+          <p className="text-small text-muted">{order.student_class ?? "Tanpa kelas"}</p>
         </div>
         <Badge tone={STATUS_TONE[order.status]}>{meta.label}</Badge>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="tnum text-base font-bold text-ink">{order.booking_code}</span>
-        <span className="inline-flex items-center gap-1 text-xs text-muted">
+        <span className="tnum text-[17px] font-bold text-ink">{order.booking_code}</span>
+        <span className="inline-flex items-center gap-1 text-small text-muted">
           <Clock3 size={14} /> {order.pickup_time_slot}
         </span>
       </div>
 
-      <ul className="mt-3 space-y-2 border-t border-line pt-3">
+      <ul className="mt-3 space-y-2 pt-3">
         {order.items.map((item) => (
-          <li key={item.id} className="text-sm">
+          <li key={item.id} className="text-[15px]">
             <div className="flex items-start justify-between gap-3">
               <span className="text-ink-soft">
                 <span className="tnum font-semibold text-ink">{item.quantity}x</span> {item.name}
@@ -107,7 +107,7 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
               </span>
             </div>
             {item.item_notes ? (
-              <p className="mt-0.5 pl-6 text-xs font-medium text-gold-600">
+              <p className="mt-0.5 pl-6 text-small font-medium text-gold-600">
                 Catatan: {item.item_notes}
               </p>
             ) : null}
@@ -119,21 +119,21 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
         <div className="mt-3 flex items-start gap-2 rounded-control bg-gold-50 px-3 py-2.5">
           <StickyNote size={16} className="mt-0.5 shrink-0 text-gold-600" />
           <div>
-            <p className="text-xs font-semibold text-gold-600">Catatan siswa</p>
-            <p className="mt-0.5 text-sm text-ink-soft">{order.notes}</p>
+            <p className="text-small font-semibold text-gold-600">Catatan siswa</p>
+            <p className="mt-0.5 text-[15px] text-ink-soft">{order.notes}</p>
           </div>
         </div>
       ) : null}
 
-      <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
-        <span className="text-xs text-muted">{formatDateTime(order.created_at)}</span>
-        <span className="tnum text-sm font-bold text-ink">{formatRupiah(net)}</span>
+      <div className="mt-3 flex items-center justify-between pt-3">
+        <span className="text-small text-muted">{formatDateTime(order.created_at)}</span>
+        <span className="tnum text-[15px] font-bold text-ink">{formatRupiah(net)}</span>
       </div>
 
       {error ? (
         <p
           role="alert"
-          className="mt-3 flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2 text-sm text-danger-600"
+          className="mt-3 flex items-start gap-2 rounded-control bg-danger-50 px-3 py-2.5 text-[15px] text-danger-600"
         >
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           {error}
@@ -202,10 +202,10 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
                 aria-selected={active}
                 onClick={() => setSlot(option)}
                 className={cn(
-                  "h-10 shrink-0 rounded-control border px-3 text-sm font-semibold transition-colors",
+                  "h-10 shrink-0 rounded-full px-4 text-[15px] font-semibold transition-colors",
                   active
-                    ? "border-eco-600 bg-eco-600 text-white"
-                    : "border-line bg-white text-ink-soft hover:bg-mint",
+                    ? "bg-eco-600 text-white"
+                    : "bg-white text-ink-soft hover:bg-mint",
                 )}
               >
                 {option === "semua" ? "Semua slot" : option}
@@ -225,10 +225,10 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
                 aria-selected={active}
                 onClick={() => setStatus(option)}
                 className={cn(
-                  "h-10 rounded-control border px-3 text-sm font-semibold capitalize transition-colors",
+                  "h-10 rounded-full px-4 text-[15px] font-semibold capitalize transition-colors",
                   active
-                    ? "border-eco-600 bg-eco-50 text-eco-700"
-                    : "border-line bg-white text-ink-soft hover:bg-mint",
+                    ? "bg-eco-50 text-eco-700"
+                    : "bg-white text-ink-soft hover:bg-mint",
                 )}
               >
                 {option}

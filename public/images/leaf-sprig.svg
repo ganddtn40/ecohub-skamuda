@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 320" width="220" height="320" fill="none" role="img" aria-labelledby="sprigTitle">
+  <title id="sprigTitle">Ranting daun hijau dengan delapan helai daun</title>
+  <style>
+    .stem { stroke: #086337; stroke-linecap: round; }
+    .rib  { stroke: #053B22; stroke-width: 1.5; opacity: .26; }
+    .l1 { fill: #149057; }
+    .l2 { fill: #3DAA78; }
+    .l3 { fill: #74C79E; }
+    .l4 { fill: #0A7A44; }
+  </style>
+
+  <defs>
+    <path id="lf" d="M0 0C20 -19 55 -17 75 0C55 17 20 19 0 0Z" />
+    <path id="rb" d="M6 0H68" />
+  </defs>
+
+  <path class="stem" d="M110 314C110 314 104 232 96 186C88 140 76 92 92 34" stroke-width="7" />
+
+  <g transform="translate(104 268) rotate(-164) scale(1.16)">
+    <use href="#lf" class="l2" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(112 232) rotate(-12) scale(1.08)">
+    <use href="#lf" class="l3" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(98 196) rotate(-172) scale(1.12)">
+    <use href="#lf" class="l1" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(110 164) rotate(-20) scale(.98)">
+    <use href="#lf" class="l4" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(94 132) rotate(-158) scale(.9)">
+    <use href="#lf" class="l2" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(102 104) rotate(-28) scale(.78)">
+    <use href="#lf" class="l3" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(90 78) rotate(-172) scale(.66)">
+    <use href="#lf" class="l1" /><use href="#rb" class="rib" />
+  </g>
+  <g transform="translate(94 52) rotate(-44) scale(.58)">
+    <use href="#lf" class="l4" /><use href="#rb" class="rib" />
+  </g>
+
+  <path class="l4" d="M92 34C86 24 86 12 92 2C98 12 98 24 92 34Z" />
+</svg>

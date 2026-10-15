@@ -165,7 +165,7 @@ export function MenuManager({
             </Select>
           </Field>
         ) : (
-          <p className="text-sm text-muted">
+          <p className="text-[15px] text-muted">
             Stand: <span className="font-semibold text-ink">{stands[0].stand_name}</span>
           </p>
         )}
@@ -188,11 +188,11 @@ export function MenuManager({
             {visible.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-wrap items-center gap-3 rounded-card border border-line bg-white p-4"
+                className="flex flex-wrap items-center gap-3 rounded-card bg-white p-4"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">{item.name}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                  <p className="truncate text-[15px] font-semibold text-ink">{item.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-small text-muted">
                     <span className="tnum font-semibold text-eco-700">
                       {formatRupiah(item.price_idr)}
                     </span>
@@ -208,10 +208,10 @@ export function MenuManager({
                   onClick={() => toggleAvailable(item)}
                   aria-pressed={item.is_available}
                   className={cn(
-                    "inline-flex h-9 items-center gap-1.5 rounded-control border px-3 text-xs font-semibold transition-colors",
+                    "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-small font-semibold transition-colors",
                     item.is_available
-                      ? "border-eco-200 bg-eco-50 text-eco-700"
-                      : "border-line bg-mint text-muted",
+                      ? "bg-eco-50 text-eco-700"
+                      : "bg-mint text-muted",
                   )}
                 >
                   {item.is_available ? <Check size={14} /> : <X size={14} />}
@@ -223,7 +223,7 @@ export function MenuManager({
                     type="button"
                     onClick={() => openEdit(item)}
                     aria-label={`Ubah ${item.name}`}
-                    className="grid h-9 w-9 place-items-center rounded-control border border-line text-ink-soft transition-colors hover:bg-mint"
+                    className="grid h-9 w-9 place-items-center rounded-control text-ink-soft transition-colors hover:bg-mint"
                   >
                     <Pencil size={15} />
                   </button>
@@ -233,14 +233,14 @@ export function MenuManager({
                       <button
                         type="button"
                         onClick={() => remove(item)}
-                        className="inline-flex h-9 items-center rounded-control bg-danger-500 px-2.5 text-xs font-semibold text-white hover:bg-danger-600"
+                        className="inline-flex h-9 items-center rounded-control bg-danger-500 px-2.5 text-small font-semibold text-white hover:bg-danger-600"
                       >
                         Hapus
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmId(null)}
-                        className="grid h-9 w-9 place-items-center rounded-control border border-line text-muted hover:bg-mint"
+                        className="grid h-9 w-9 place-items-center rounded-control text-muted hover:bg-mint"
                         aria-label="Batal menghapus"
                       >
                         <X size={15} />
@@ -251,7 +251,7 @@ export function MenuManager({
                       type="button"
                       onClick={() => setConfirmId(item.id)}
                       aria-label={`Hapus ${item.name}`}
-                      className="grid h-9 w-9 place-items-center rounded-control border border-line text-muted transition-colors hover:bg-danger-50 hover:text-danger-600"
+                      className="grid h-9 w-9 place-items-center rounded-control text-muted transition-colors hover:bg-danger-50 hover:text-danger-600"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -273,7 +273,7 @@ export function MenuManager({
             {error ? (
               <p
                 role="alert"
-                className="flex items-start gap-2 rounded-control border border-danger-500/30 bg-danger-50 px-3 py-2.5 text-sm text-danger-600"
+                className="flex items-start gap-2 rounded-control bg-danger-50 px-3 py-2.5 text-[15px] text-danger-600"
               >
                 <AlertCircle size={17} className="mt-0.5 shrink-0" />
                 {error}
@@ -336,10 +336,10 @@ export function MenuManager({
             aria-pressed={form.available}
             onClick={() => setForm({ ...form, available: !form.available })}
             className={cn(
-              "flex w-full items-center justify-between rounded-control border px-3 py-3 text-sm font-semibold transition-colors",
+              "flex w-full items-center justify-between rounded-control px-3.5 py-3 text-[15px] font-semibold transition-colors",
               form.available
-                ? "border-eco-200 bg-eco-50 text-eco-700"
-                : "border-line bg-mint text-muted",
+                ? "bg-eco-50 text-eco-700"
+                : "bg-mint text-muted",
             )}
           >
             Status ketersediaan

@@ -17,8 +17,8 @@ export default function GlobalError({
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-mint">
-      <header className="rounded-b-header bg-eco-600">
-        <div className="mx-auto flex w-full max-w-5xl items-center px-4 py-3.5 sm:px-6">
+      <header className="on-field bg-eco-900 text-white">
+        <div className="page-x mx-auto flex w-full max-w-5xl items-center py-3.5">
           <Link href={ROUTE.home} aria-label="Beranda SKAMUDA EcoHub">
             <BrandMark tone="light" />
           </Link>

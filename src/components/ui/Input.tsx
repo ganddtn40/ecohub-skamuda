@@ -41,7 +41,7 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn("mb-1.5 block text-sm font-semibold text-ink-soft", className)}
+      className={cn("mb-2 block text-small font-semibold text-ink-soft", className)}
       {...props}
     />
   );
@@ -68,9 +68,9 @@ export function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error ? (
-        <p className="mt-1.5 text-sm text-danger-600">{error}</p>
+        <p className="mt-1.5 text-small text-danger-600">{error}</p>
       ) : hint ? (
-        <p className="mt-1.5 text-sm text-muted">{hint}</p>
+        <p className="mt-1.5 text-small text-muted">{hint}</p>
       ) : null}
     </div>
   );
