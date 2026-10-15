@@ -1,0 +1,44 @@
+import type { ButtonHTMLAttributes } from "react";
+import { cn } from "@/lib/cn";
+
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "onDark" | "outlineDark";
+export type ButtonSize = "sm" | "md";
+
+const SIZES: Record<ButtonSize, string> = {
+  sm: "h-11 px-3 text-sm",
+  md: "h-12 px-5 text-[15px]",
+};
+
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: "bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800",
+  secondary: "border border-line bg-white text-ink hover:bg-mint",
+  ghost: "text-eco-700 hover:bg-eco-50",
+  danger: "bg-danger-500 text-white hover:bg-danger-600",
+  onDark: "bg-white text-eco-700 hover:bg-mint",
+  outlineDark: "border border-white/40 text-white hover:bg-white/10",
+};
+
+/** Kelas tombol, dipakai bersama oleh <button> dan <Link>. */
+export function buttonStyles(
+  variant: ButtonVariant = "primary",
+  size: ButtonSize = "md",
+  className?: string,
+): string {
+  return cn(
+    "inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold",
+    "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 focus-visible:ring-offset-2",
+    "disabled:cursor-not-allowed disabled:opacity-50",
+    SIZES[size],
+    VARIANTS[variant],
+    className,
+  );
+}
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+};
+
+export function Button({ variant = "primary", size = "md", className, ...props }: ButtonProps) {
+  return <button className={buttonStyles(variant, size, className)} {...props} />;
+}
