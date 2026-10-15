@@ -5,6 +5,7 @@ import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { OrderBoard, type VendorOrder } from "@/components/vendor/OrderBoard";
+import { unwrap } from "@/lib/query";
 import type { OrderStatus } from "@/types/database";
 
 export const metadata = { title: "Pesanan Masuk" };
@@ -34,25 +35,29 @@ export default async function VendorOrdersPage() {
   const { profile } = await requireRole(["canteen_vendor"]);
   const supabase = await createClient();
 
-  const { data: stands } = await supabase
-    .from("canteen_stands")
-    .select("id")
-    .eq("vendor_id", profile.id);
+  const stands = unwrap(
+    await supabase
+      .from("canteen_stands")
+      .select("id")
+      .eq("vendor_id", profile.id),
+  ) as Array<{ id: string }>;
 
-  const standIds = (stands ?? []).map((stand) => stand.id as string);
+  const standIds = stands.map((stand) => stand.id);
 
   let orders: VendorOrder[] = [];
   if (standIds.length > 0) {
-    const { data } = await supabase
-      .from("orders")
-      .select(
-        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), profiles(full_name, class_name), order_items(id, quantity, unit_price, item_notes, menu_items(name))",
-      )
-      .in("stand_id", standIds)
-      .order("created_at", { ascending: false })
-      .limit(120);
+    const data = unwrap(
+      await supabase
+        .from("orders")
+        .select(
+          "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), profiles(full_name, class_name), order_items(id, quantity, unit_price, item_notes, menu_items(name))",
+        )
+        .in("stand_id", standIds)
+        .order("created_at", { ascending: false })
+        .limit(120),
+    );
 
-    orders = ((data ?? []) as unknown as RawOrder[]).map((order) => ({
+    orders = (data as unknown as RawOrder[]).map((order) => ({
       id: order.id,
       booking_code: order.booking_code,
       status: order.status,

@@ -4,6 +4,7 @@ import { ImpactStatsGrid } from "@/components/leaderboard/ImpactStatsGrid";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { createClient } from "@/lib/supabase/server";
+import { unwrap } from "@/lib/query";
 import type { ClassLeaderboardRow, ImpactStats } from "@/types/database";
 
 export const metadata: Metadata = { title: "Papan Skor" };
@@ -13,19 +14,13 @@ export const revalidate = 0;
 export default async function LeaderboardPage() {
   const supabase = await createClient();
 
-  const [{ data: leaderboardRows }, { data: impactData }] = await Promise.all([
+  const [leaderboardRows, impactData] = await Promise.all([
     supabase.rpc("get_class_leaderboard"),
     supabase.rpc("get_impact_stats"),
   ]);
 
-  const rows = (leaderboardRows ?? []) as ClassLeaderboardRow[];
-  const stats = (impactData ?? {
-    total_kg: 0,
-    total_points: 0,
-    students: 0,
-    deposits: 0,
-    co2e_kg: 0,
-  }) as ImpactStats;
+  const rows = unwrap(leaderboardRows) as ClassLeaderboardRow[];
+  const stats = unwrap(impactData) as ImpactStats;
 
   return (
     <div className="min-h-dvh bg-mint">

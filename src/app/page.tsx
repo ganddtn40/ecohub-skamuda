@@ -15,6 +15,7 @@ import { buttonStyles } from "@/components/ui/Button";
 import { ImpactStatsGrid } from "@/components/leaderboard/ImpactStatsGrid";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { unwrap } from "@/lib/query";
 import { ROLE_HOME, ROUTE } from "@/lib/constants";
 import { formatKg } from "@/lib/format";
 import type { ClassLeaderboardRow, ImpactStats } from "@/types/database";
@@ -50,19 +51,13 @@ export default async function HomePage() {
   if (session) redirect(ROLE_HOME[session.profile.role]);
 
   const supabase = await createClient();
-  const [{ data: leaderboardRows }, { data: impactData }] = await Promise.all([
+  const [leaderboardRows, impactData] = await Promise.all([
     supabase.rpc("get_class_leaderboard"),
     supabase.rpc("get_impact_stats"),
   ]);
 
-  const rows = (leaderboardRows ?? []) as ClassLeaderboardRow[];
-  const stats = (impactData ?? {
-    total_kg: 0,
-    total_points: 0,
-    students: 0,
-    deposits: 0,
-    co2e_kg: 0,
-  }) as ImpactStats;
+  const rows = unwrap(leaderboardRows) as ClassLeaderboardRow[];
+  const stats = unwrap(impactData) as ImpactStats;
 
   const top = rows.filter((row) => Number(row.total_kg) > 0).slice(0, 5);
 

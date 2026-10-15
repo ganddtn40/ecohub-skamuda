@@ -5,6 +5,7 @@ import { PageTitle } from "@/components/layout/PageTitle";
 import { StatTile } from "@/components/layout/StatTile";
 import { WasteOfficerPanel } from "@/components/officer/WasteOfficerPanel";
 import { formatNumber, todayStartISO } from "@/lib/format";
+import { unwrap } from "@/lib/query";
 import type { WasteItemType } from "@/types/database";
 
 export const metadata = { title: "Pindai Setoran" };
@@ -26,8 +27,8 @@ export default async function OfficerPage() {
       .gte("created_at", todayStartISO()),
   ]);
 
-  const wasteTypes = (typesRes.data ?? []) as WasteItemType[];
-  const todayRows = (todayRes.data ?? []) as Array<{ weight_kg: number; points_earned: number }>;
+  const wasteTypes = unwrap(typesRes) as WasteItemType[];
+  const todayRows = unwrap(todayRes) as Array<{ weight_kg: number; points_earned: number }>;
   const todayCount = todayRows.length;
   const todayKg = todayRows.reduce((sum, row) => sum + Number(row.weight_kg), 0);
   const todayPoints = todayRows.reduce((sum, row) => sum + Number(row.points_earned), 0);

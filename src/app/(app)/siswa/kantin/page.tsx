@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { MenuCatalog } from "@/components/student/MenuCatalog";
+import { unwrap } from "@/lib/query";
 import type { CanteenStand, MenuItem, VoucherTier } from "@/types/database";
 
 export const metadata = { title: "Kantin" };
@@ -30,6 +31,10 @@ export default async function StudentCanteenPage() {
       .order("points_cost", { ascending: true }),
   ]);
 
+  const stands = unwrap(standsRes) as CanteenStand[];
+  const menuItems = unwrap(menuRes) as MenuItem[];
+  const tiers = unwrap(tiersRes) as VoucherTier[];
+
   return (
     <div>
       <PageTitle
@@ -39,9 +44,9 @@ export default async function StudentCanteenPage() {
 
       <div className="mt-5">
         <MenuCatalog
-          stands={(standsRes.data ?? []) as CanteenStand[]}
-          menuItems={(menuRes.data ?? []) as MenuItem[]}
-          tiers={(tiersRes.data ?? []) as VoucherTier[]}
+          stands={stands}
+          menuItems={menuItems}
+          tiers={tiers}
           pointsBalance={profile.points_balance}
         />
       </div>

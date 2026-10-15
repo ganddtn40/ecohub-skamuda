@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { StudentOrderList, type StudentOrder } from "@/components/student/StudentOrderList";
+import { unwrap } from "@/lib/query";
 import type { OrderStatus } from "@/types/database";
 
 export const metadata = { title: "Pesanan Saya" };
@@ -32,16 +33,18 @@ export default async function StudentOrdersPage() {
   const { profile } = await requireRole(["student"]);
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("orders")
-    .select(
-      "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
-    )
-    .eq("student_id", profile.id)
-    .order("created_at", { ascending: false })
-    .limit(40);
+  const data = unwrap(
+    await supabase
+      .from("orders")
+      .select(
+        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
+      )
+      .eq("student_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(40),
+  );
 
-  const orders: StudentOrder[] = ((data ?? []) as unknown as RawOrder[]).map((order) => ({
+  const orders: StudentOrder[] = (data as unknown as RawOrder[]).map((order) => ({
     id: order.id,
     booking_code: order.booking_code,
     pickup_time_slot: order.pickup_time_slot,

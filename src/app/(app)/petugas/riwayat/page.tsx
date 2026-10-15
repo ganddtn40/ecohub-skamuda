@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { unwrap } from "@/lib/query";
 import {
   WasteHistoryTable,
   type WasteHistoryRow,
@@ -16,15 +17,15 @@ export default async function OfficerHistoryPage() {
   const { profile } = await requireRole(["waste_officer"]);
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("waste_deposits")
-    .select(
-      "id, created_at, weight_kg, quantity, points_earned, item_type, profiles!waste_deposits_student_id_fkey(full_name, class_name), waste_item_types(label)",
-    )
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  const rows = (data ?? []) as unknown as WasteHistoryRow[];
+  const rows = unwrap(
+    await supabase
+      .from("waste_deposits")
+      .select(
+        "id, created_at, weight_kg, quantity, points_earned, item_type, profiles!waste_deposits_student_id_fkey(full_name, class_name), waste_item_types(label)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200),
+  ) as unknown as WasteHistoryRow[];
 
   return (
     <div>

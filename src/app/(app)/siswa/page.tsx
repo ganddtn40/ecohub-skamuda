@@ -11,6 +11,7 @@ import { buttonStyles } from "@/components/ui/Button";
 import { DepositList, type DepositListItem } from "@/components/student/DepositList";
 import { DAILY_RECYCLE_TARGET_KG, ROUTE } from "@/lib/constants";
 import { formatKg, formatNumber, todayStartISO } from "@/lib/format";
+import { unwrap } from "@/lib/query";
 
 export const metadata = { title: "Dashboard Siswa" };
 export const revalidate = 0;
@@ -38,12 +39,12 @@ export default async function StudentDashboard() {
       .in("status", ["pending", "processing", "ready_for_pickup"]),
   ]);
 
-  const deposits = (depositsRes.data ?? []) as unknown as DepositListItem[];
-  const todayKg = (todayRes.data ?? []).reduce(
+  const deposits = unwrap(depositsRes) as unknown as DepositListItem[];
+  const todayKg = unwrap(todayRes).reduce(
     (sum, row) => sum + Number((row as { weight_kg: number }).weight_kg),
     0,
   );
-  const activeOrders = ordersRes.data?.length ?? 0;
+  const activeOrders = unwrap(ordersRes).length;
 
   const progress = DAILY_RECYCLE_TARGET_KG > 0 ? todayKg / DAILY_RECYCLE_TARGET_KG : 0;
   const firstName = profile.full_name.split(/\s+/)[0];
