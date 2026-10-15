@@ -63,10 +63,6 @@
     @apply relative w-full overflow-hidden;
   }
 
-  .surface {
-    @apply rounded-card border border-line bg-white;
-  }
-
   /* Kaca buta untuk teks di atas foto. Satu-satunya pengecualian gradient. */
   .scrim {
     background-image: linear-gradient(
