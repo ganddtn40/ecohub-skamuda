@@ -4,23 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { LogoutButton } from "@/components/auth/LogoutButton";
-import type { NavItem } from "@/components/layout/nav";
+import { NAV_BY_ROLE } from "@/components/layout/nav";
 import { cn } from "@/lib/cn";
+import type { UserRole } from "@/types/database";
 
 /**
  * Header emerald dengan sudut bawah melengkung (rounded-bottom).
  * Desktop menampilkan nav inline; mobile memakai BottomNav.
  */
 export function AppHeader({
-  nav,
+  role,
   fullName,
   roleLabel,
 }: {
-  nav: NavItem[];
+  role: UserRole;
   fullName: string;
   roleLabel: string;
 }) {
   const pathname = usePathname();
+  const nav = NAV_BY_ROLE[role];
 
   return (
     <header className="rounded-b-header bg-eco-600 text-white">

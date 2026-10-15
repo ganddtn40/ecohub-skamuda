@@ -6,7 +6,6 @@ import {
   Receipt,
   ScanLine,
   ShoppingBag,
-  Trophy,
   UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
@@ -36,10 +35,4 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: ROUTE.vendorScan, label: "Pindai Tiket", icon: QrCode },
     { href: ROUTE.vendorMenu, label: "Menu", icon: UtensilsCrossed },
   ],
-};
-
-export const LEADERBOARD_NAV: NavItem = {
-  href: ROUTE.leaderboard,
-  label: "Papan Skor",
-  icon: Trophy,
 };

@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { NavItem } from "@/components/layout/nav";
+import { NAV_BY_ROLE } from "@/components/layout/nav";
 import { cn } from "@/lib/cn";
+import type { UserRole } from "@/types/database";
 
 /** Navigasi bawah khusus mobile (md:hidden). Target sentuh minimal 44px. */
-export function BottomNav({ nav }: { nav: NavItem[] }) {
+export function BottomNav({ role }: { role: UserRole }) {
   const pathname = usePathname();
+  const nav = NAV_BY_ROLE[role];
 
   return (
     <nav

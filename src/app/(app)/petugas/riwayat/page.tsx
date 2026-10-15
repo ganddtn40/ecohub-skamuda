@@ -19,7 +19,7 @@ export default async function OfficerHistoryPage() {
   const { data } = await supabase
     .from("waste_deposits")
     .select(
-      "id, created_at, weight_kg, quantity, points_earned, item_type, profiles(full_name, class_name), waste_item_types(label)",
+      "id, created_at, weight_kg, quantity, points_earned, item_type, profiles!waste_deposits_student_id_fkey(full_name, class_name), waste_item_types(label)",
     )
     .order("created_at", { ascending: false })
     .limit(200);

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Html5Qrcode } from "html5-qrcode";
 import { CameraOff } from "lucide-react";
+import { stopQrScanner } from "@/lib/qr";
 
 /**
  * Komponen kamera QR yang dapat dipakai ulang.
@@ -53,13 +54,7 @@ export function QrCamera({
 
     return () => {
       disposed = true;
-      const current = instance;
-      if (current) {
-        current
-          .stop()
-          .then(() => current.clear())
-          .catch(() => {});
-      }
+      stopQrScanner(instance);
     };
   }, [active, elementId]);
 

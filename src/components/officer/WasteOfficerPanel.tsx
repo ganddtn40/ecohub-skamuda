@@ -20,6 +20,7 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { Avatar } from "@/components/ui/Avatar";
 import { formatKg, formatNumber } from "@/lib/format";
+import { stopQrScanner } from "@/lib/qr";
 import type { WasteItemType } from "@/types/database";
 
 interface LookedUpStudent {
@@ -132,13 +133,7 @@ export function WasteOfficerPanel({ wasteTypes }: { wasteTypes: WasteItemType[] 
 
     return () => {
       disposed = true;
-      const current = instance;
-      if (current) {
-        current
-          .stop()
-          .then(() => current.clear())
-          .catch(() => {});
-      }
+      stopQrScanner(instance);
       instanceRef.current = null;
     };
   }, [cameraOn, student]);
