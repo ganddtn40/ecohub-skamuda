@@ -15,24 +15,24 @@ Semua data hidup di Supabase (Auth + Postgres + RLS + Realtime). Tidak ada data 
 ## Fitur
 
 ### Siswa
-- **Kartu QR pribadi** (`/siswa/qr`) — token QR unik per akun untuk dipindai petugas.
-- **Dashboard** (`/siswa`) — saldo poin, total sampah didaur ulang, progres target harian.
-- **Kantin** (`/siswa/kantin`) — filter per stand, keranjang, catatan khusus per item & per pesanan, tukar poin, checkout.
-- **Pesanan** (`/siswa/pesanan`) — tiket booking dengan kode `SKM-I1-XXXX` + QR pengambilan, lacak status real-time.
-- **Riwayat** (`/siswa/riwayat`) — riwayat setoran sampah dan pemakaian poin.
+- **Kartu QR pribadi** (`/siswa/qr`): token QR unik per akun untuk dipindai petugas.
+- **Dashboard** (`/siswa`): saldo poin, total sampah didaur ulang, progres target harian.
+- **Kantin** (`/siswa/kantin`): filter per stand, keranjang, catatan khusus per item & per pesanan, tukar poin, checkout.
+- **Pesanan** (`/siswa/pesanan`): tiket booking dengan kode `SKM-I1-XXXX` + QR pengambilan, lacak status real-time.
+- **Riwayat** (`/siswa/riwayat`): riwayat setoran sampah dan pemakaian poin.
 
 ### Petugas Bank Sampah
-- **Panel setoran** (`/petugas`) — pemindai kamera langsung (QR siswa) + input token manual sebagai cadangan, form jenis & berat sampah, konversi poin otomatis.
-- **Riwayat** (`/petugas/riwayat`) — tabel riwayat setoran + ekspor CSV.
+- **Panel setoran** (`/petugas`): pemindai kamera langsung (QR siswa) + input token manual sebagai cadangan, form jenis & berat sampah, konversi poin otomatis.
+- **Riwayat** (`/petugas/riwayat`): tabel riwayat setoran + ekspor CSV.
 
 ### Penjual Kantin
-- **Papan pesanan** (`/kantin`) — papan real-time dikelompokkan per slot jam istirahat, menampilkan catatan siswa, ubah status (menunggu → disiapkan → siap diambil → selesai).
-- **Verifikator tiket** (`/kantin/scan`) — pindai QR tiket pesanan, verifikasi keaslian & statusnya.
-- **Kelola menu** (`/kantin/menu`) — tambah/ubah/hapus item menu per stand.
+- **Papan pesanan** (`/kantin`): papan real-time dikelompokkan per slot jam istirahat, menampilkan catatan siswa, ubah status (menunggu → disiapkan → siap diambil → selesai).
+- **Verifikator tiket** (`/kantin/scan`): pindai QR tiket pesanan, verifikasi keaslian & statusnya.
+- **Kelola menu** (`/kantin/menu`): tambah/ubah/hapus item menu per stand.
 
 ### Publik
-- **Landing** (`/`) — penjelasan singkat + ajakan daftar.
-- **Papan skor** (`/papan-skor`) — papan peringkat kelas + statistik dampak lingkungan (estimasi CO2e), tanpa login.
+- **Landing** (`/`): penjelasan singkat + ajakan daftar.
+- **Papan skor** (`/papan-skor`): papan peringkat kelas + statistik dampak lingkungan (estimasi CO2e), tanpa login.
 
 ---
 
@@ -48,7 +48,7 @@ Semua data hidup di Supabase (Auth + Postgres + RLS + Realtime). Tidak ada data 
 | QR code | `qrcode.react` (generate) + `html5-qrcode` (kamera) |
 | Font | Plus Jakarta Sans / Inter |
 
-Desain: **Clean Emerald Eco-App** — header emerald `#0A7A44` dengan sudut bawah membulat, latar `#F4F7F5`, kartu putih berbingkai tipis, mobile-first, target kontras WCAG AA.
+Desain **Clean Emerald Eco-App**: header emerald `#0A7A44` dengan sudut bawah membulat, latar `#F4F7F5`, kartu putih berbingkai tipis, mobile-first, target kontras WCAG AA.
 
 ---
 
@@ -97,8 +97,8 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>   # opsional, hanya untuk tugas adm
 
 ### 4. Buat skema database
 Buka **Supabase Dashboard → SQL Editor**, lalu jalankan berurutan:
-1. `supabase/migrations/001_production_live.sql` — tabel, enum, indeks, trigger, RPC, dan seluruh kebijakan RLS.
-2. `supabase/seed.sql` — 30 kelas resmi, jenis sampah, tier voucher, 2 stand kantin + contoh menu, dan 4 akun demo.
+1. `supabase/migrations/001_production_live.sql`: tabel, enum, indeks, trigger, RPC, dan seluruh kebijakan RLS.
+2. `supabase/seed.sql`: 30 kelas resmi, jenis sampah, tier voucher, 2 stand kantin + contoh menu, dan 4 akun demo.
 
 > Jalankan migrasi dulu, baru seed.
 
@@ -128,9 +128,9 @@ Buka [http://localhost:3000](http://localhost:3000).
 
 ## Alur Pendaftaran & Peran
 
-- **Siswa mendaftar sendiri** di `/register`. Formulir hanya untuk siswa (tanpa pilihan peran), dan **kelas dipilih dari daftar resmi** (X/XI/XII × TKJ, TKR, MAPER, HOTEL, ASKEP, FARMASI) — tanpa input manual. Konfirmasi email memakai alur asli Supabase.
+- **Siswa mendaftar sendiri** di `/register`. Formulir hanya untuk siswa (tanpa pilihan peran), dan **kelas dipilih dari daftar resmi** (X/XI/XII × TKJ, TKR, MAPER, HOTEL, ASKEP, FARMASI), tanpa input manual. Konfirmasi email memakai alur asli Supabase.
 - **Petugas Bank Sampah** dan **Penjual Kantin tidak bisa mendaftar sendiri.** Akunnya dibuat oleh admin, lalu perannya diubah lewat query di `supabase/production_seed_roles.sql`.
-- Peran disimpan di kolom `profiles.role` dan dipakai baik oleh RLS maupun middleware rute — bukan sekadar di sisi klien.
+- Peran disimpan di kolom `profiles.role` dan dipakai baik oleh RLS maupun middleware rute, bukan sekadar di sisi klien.
 
 ---
 
@@ -152,11 +152,11 @@ Tabel inti (semua di `public`):
 | `order_items` | Item per pesanan, dengan `item_notes`. |
 
 ### RPC atomik (SECURITY DEFINER)
-- `lookup_student_by_token(p_qr_token)` — validasi QR siswa oleh petugas.
-- `process_waste_deposit(p_qr_token, p_item_type, p_quantity, p_weight_kg)` — catat setoran + tambah poin (`floor(points_per_kg × weight_kg)`).
-- `place_order(p_stand_id, p_slot, p_notes, p_items jsonb, p_voucher_points)` — buat pesanan + item + potong poin secara atomik (semua item harus dari satu stand).
-- `get_class_leaderboard()` — peringkat kelas untuk papan skor publik.
-- `get_impact_stats()` — statistik dampak (total kg, estimasi CO2e).
+- `lookup_student_by_token(p_qr_token)`: validasi QR siswa oleh petugas.
+- `process_waste_deposit(p_qr_token, p_item_type, p_quantity, p_weight_kg)`: catat setoran + tambah poin (`floor(points_per_kg × weight_kg)`).
+- `place_order(p_stand_id, p_slot, p_notes, p_items jsonb, p_voucher_points)`: buat pesanan + item + potong poin secara atomik (semua item harus dari satu stand).
+- `get_class_leaderboard()`: peringkat kelas untuk papan skor publik.
+- `get_impact_stats()`: statistik dampak (total kg, estimasi CO2e).
 
 ### Catatan perhitungan
 - `total_price` = harga bruto; `discount_applied` = potongan voucher; yang dibayar = `total_price − discount_applied`.
