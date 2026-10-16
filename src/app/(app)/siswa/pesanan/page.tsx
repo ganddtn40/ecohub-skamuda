@@ -25,6 +25,7 @@ interface RawOrder {
   discount_applied: number;
   payment_mode: OrderPaymentMode;
   points_paid: number;
+  points_refunded: number;
   notes: string | null;
   created_at: string;
   canteen_stands: { stand_name: string } | null;
@@ -39,7 +40,7 @@ export default async function StudentOrdersPage() {
     await supabase
       .from("orders")
       .select(
-        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, payment_mode, points_paid, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
+        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, payment_mode, points_paid, points_refunded, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
       )
       .eq("student_id", profile.id)
       .order("created_at", { ascending: false })
@@ -55,6 +56,7 @@ export default async function StudentOrdersPage() {
     discount_applied: order.discount_applied,
     payment_mode: order.payment_mode,
     points_paid: order.points_paid,
+    points_refunded: order.points_refunded,
     notes: order.notes,
     stand_name: order.canteen_stands?.stand_name ?? null,
     created_at: order.created_at,

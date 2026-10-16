@@ -834,12 +834,26 @@ git commit -m "feat(student): pay for an order with points and trust the RPC tot
 - Create: `src/components/student/PreorderGate.tsx`
 - Modify: `src/app/(app)/siswa/kantin/page.tsx`
 - Modify: `src/components/student/StudentOrderList.tsx`
+- Modify: `src/app/(app)/siswa/pesanan/page.tsx`
+- Modify: `src/components/vendor/OrderBoard.tsx`
+- Modify: `src/lib/constants.ts`
 
 **Interfaces:**
 - Consumes: `PreorderStatus` dan `TicketData` dari Task 2; `get_preorder_status` dari Task 4;
   `MenuCatalog` dari Task 6.
 - Produces: `PreorderGate` dengan props
-  `{ status: PreorderStatus; activeOrder: TicketData | null; children: React.ReactNode }`
+  `{ status: PreorderStatus; activeOrder: TicketData | null; children: React.ReactNode }`;
+  `ACTIVE_ORDER_STATUSES` di `src/lib/constants.ts`.
+
+**Temuan saat pengerjaan: tab "Aktif" di halaman pesanan siswa tidak mengenal
+`awaiting_approval`.** `StudentOrderList` punya daftar status aktif sendiri
+(`["pending", "processing", "ready_for_pickup"]`) dan tidak ikut diperbarui saat Task 2
+menambahkan `awaiting_approval` ke enum. Akibatnya pesanan yang baru dibuat hilang dari tab
+"Aktif" — tepat di halaman yang seharusnya paling jelas menampilkannya. Papan penjual punya
+daftar sendiri yang benar, dan dua daftar terpisah untuk satu pengertian yang sama itulah
+sebabnya. Karena itu pengertian "masih berjalan" dipindahkan ke `ACTIVE_ORDER_STATUSES` di
+`src/lib/constants.ts` dan dipakai oleh keduanya, termasuk `OrderBoard.tsx` yang sebelumnya
+menyimpan daftarnya secara lokal.
 
 - [ ] **Step 1: Ambil status pre-order di halaman**
 
@@ -862,12 +876,25 @@ Tiga keadaan yang saling meniadakan:
 - selain itu → render `children`, dan bila `status.unclaimed_count === 1` tambahkan blok
   `bg-gold-50` di atasnya berisi satu kalimat peringatan.
 
+**Dua penyesuaian saat pengerjaan.** Pertama, cabang pesanan aktif harus tahan terhadap
+`activeOrder` yang null walau `status.active_order_id` terisi — pesanannya bisa gagal terbaca.
+Tanpa itu penjaga akan diam-diam meloloskan katalog, dan siswa menabrak aturan
+satu-pesanan-aktif di sisi basis data. Jadi kode booking dan badge statusnya diambil dari
+`status` sebagai cadangan, dan bagian rinciannya cukup tidak dirender. Kedua, tautan di kartu
+blokir menuju `/siswa/pesanan`, bukan `/siswa/riwayat`: rute terakhir itu riwayat daur ulang,
+bukan riwayat pesanan.
+
 - [ ] **Step 3: Ketahui bahwa blokir bisa berakhir saat halaman terbuka**
 
 Karena halaman ini server-rendered dan `revalidate = 0`, spanduk blokir tidak akan hilang
 sendiri saat blokir berakhir. Tambahkan `RealtimeRefresher` untuk tabel `profiles` pada
 halaman ini sehingga perubahan `preorder_blocked_until` memicu penyegaran. Ini yang menutup
 Review Focus nomor 4; tanpa itu siswa terkunci secara visual sampai ia memuat ulang sendiri.
+
+**Tambahan saat pengerjaan:** langganannya sekaligus menyimak `orders` dengan saringan
+`student_id`. Tanpa itu kartu pesanan aktif baru hilang setelah siswa memuat ulang sendiri —
+misalnya saat penjual menerima atau menyelesaikan pesanannya sementara halaman siswa terbuka.
+Dua tabel, satu kanal.
 
 - [ ] **Step 4: Tampilkan pengembalian poin di riwayat pesanan siswa**
 
@@ -876,6 +903,13 @@ tampilkan baris "+<n> P dikembalikan" pada pesanan yang poinnya kembali. Label s
 mengikuti `ORDER_STATUS_META` yang sudah diperluas di Task 2 — periksa bahwa keduanya
 benar-benar muncul dan tidak jatuh ke nilai bawaan.
 
+**Tambahan saat pengerjaan:** barisnya juga menyebut cara bayarnya, memakai kalimat yang sama
+dengan kartu papan penjual. Sebelumnya angka yang tampil selalu `total_price - discount_applied`,
+dan untuk pesanan yang lunas dengan poin angka itu nol — benar secara teknis, tapi tidak
+mengatakan apa-apa. Sekarang pesanan poin menulis "Sudah dibayar dengan poin · n P". Medan
+`points_refunded` ditambahkan ke `StudentOrder` (dan ke query di
+`src/app/(app)/siswa/pesanan/page.tsx`) karena `TicketData` sengaja tidak memuatnya.
+
 - [ ] **Step 5: Verifikasi di peramban**
 
 Masuk sebagai `siswa.demo@skamuda.sch.id`. Tiga keadaan harus bisa dipaksa dan diperiksa:
@@ -883,10 +917,19 @@ bebas (katalog tampil); ada pesanan aktif (kartu pesanan aktif, tombol pesan tid
 diblokir (set `preorder_blocked_until` lewat SQL Editor lalu muat ulang — spanduk merah
 muncul dan tidak ada cara memesan).
 
+Hasil yang terlihat: keempat keadaan diperiksa dengan mengubah `profiles` langsung dan satu
+pesanan asli. Bebas → katalog; `unclaimed_count = 1` → peringatan kuning di atas katalog yang
+masih bisa dipakai; `unclaimed_count = 2` + blokir 3 hari → spanduk merah tanpa katalog;
+pesanan poin yang sudah dibuat → kartu pesanan aktif menggantikan katalog. Kemudian penjual
+menandai pesanan itu tidak diambil lewat `vendor_resolve_order`: tab "Aktif" di halaman pesanan
+siswa memang memuatnya sebelum itu, dan setelahnya pesanan pindah ke "Riwayat" dengan badge
+"Tidak Diambil" serta baris "+1000 P dikembalikan", sementara halaman kantin kembali ke
+peringatan kuning dan katalognya muncul lagi.
+
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/student/PreorderGate.tsx "src/app/(app)/siswa/kantin/page.tsx" src/components/student/StudentOrderList.tsx
+git add src/components/student/PreorderGate.tsx "src/app/(app)/siswa/kantin/page.tsx" src/components/student/StudentOrderList.tsx "src/app/(app)/siswa/pesanan/page.tsx" src/components/vendor/OrderBoard.tsx src/lib/constants.ts
 git commit -m "feat(student): explain the block, the active order, and the first warning"
 ```
 

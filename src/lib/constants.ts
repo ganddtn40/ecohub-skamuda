@@ -75,6 +75,25 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "completed",
 ];
 
+/**
+ * Status yang berarti pesanan masih berjalan — belum selesai dan belum ditolak.
+ *
+ * Dipakai bersama oleh papan penjual dan daftar pesanan siswa supaya keduanya
+ * tidak pernah berbeda pendapat soal pesanan mana yang masih berjalan. Dulu
+ * masing-masing punya daftarnya sendiri, dan daftar milik siswa tertinggal saat
+ * `awaiting_approval` ditambahkan ke enum: pesanan yang baru masuk hilang dari
+ * tab "Aktif" justru di halaman yang paling butuh menampilkannya.
+ *
+ * `pending` ikut terdaftar karena itu nilai enum lama; sejak migrasi 003 tidak
+ * ada pesanan baru yang lahir dengan status itu.
+ */
+export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
+  "awaiting_approval",
+  "pending",
+  "processing",
+  "ready_for_pickup",
+];
+
 /** Target daur ulang harian per siswa (kg) untuk circular progress di dashboard. */
 export const DAILY_RECYCLE_TARGET_KG = 1;
 

@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { ORDER_STATUS_META, STATUS_TONE } from "@/lib/constants";
+import { ORDER_STATUS_META, STATUS_TONE, ACTIVE_ORDER_STATUSES } from "@/lib/constants";
 import { mapOrderError } from "@/lib/order-errors";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -276,13 +276,12 @@ export function OrderBoard({
   const [slot, setSlot] = useState<string>("semua");
 
   const slots = Array.from(new Set(orders.map((order) => order.pickup_time_slot)));
-  const activeStatuses: OrderStatus[] = ["awaiting_approval", "processing", "ready_for_pickup"];
 
   const filtered = orders.filter((order) => {
     if (slot !== "semua" && order.pickup_time_slot !== slot) return false;
-    if (status === "aktif") return activeStatuses.includes(order.status);
+    if (status === "aktif") return ACTIVE_ORDER_STATUSES.includes(order.status);
     if (status === "menunggu") return order.status === "awaiting_approval";
-    if (status === "selesai") return !activeStatuses.includes(order.status);
+    if (status === "selesai") return !ACTIVE_ORDER_STATUSES.includes(order.status);
     return true;
   });
 

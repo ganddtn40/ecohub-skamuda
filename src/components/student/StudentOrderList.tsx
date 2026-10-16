@@ -2,34 +2,34 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Clock3, Receipt, Store } from "lucide-react";
+import { Clock3, Coins, Receipt, RotateCcw, Store } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Sheet } from "@/components/ui/Sheet";
 import { BookingTicket } from "@/components/student/BookingTicket";
 import { buttonStyles } from "@/components/ui/Button";
-import { ORDER_STATUS_META, ROUTE, STATUS_TONE } from "@/lib/constants";
+import { ORDER_STATUS_META, ROUTE, STATUS_TONE, ACTIVE_ORDER_STATUSES } from "@/lib/constants";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import type { OrderStatus, TicketData } from "@/types/database";
+import type { TicketData } from "@/types/database";
 
 export interface StudentOrder extends TicketData {
   id: string;
   created_at: string;
+  /** Poin yang dikembalikan setelah pesanan ditolak atau tidak diambil. */
+  points_refunded: number;
 }
 
 type Filter = "aktif" | "selesai" | "semua";
-
-const ACTIVE_STATUSES: OrderStatus[] = ["pending", "processing", "ready_for_pickup"];
 
 export function StudentOrderList({ orders }: { orders: StudentOrder[] }) {
   const [filter, setFilter] = useState<Filter>("aktif");
   const [selected, setSelected] = useState<StudentOrder | null>(null);
 
   const filtered = useMemo(() => {
-    if (filter === "aktif") return orders.filter((o) => ACTIVE_STATUSES.includes(o.status));
+    if (filter === "aktif") return orders.filter((o) => ACTIVE_ORDER_STATUSES.includes(o.status));
     if (filter === "selesai")
-      return orders.filter((o) => !ACTIVE_STATUSES.includes(o.status));
+      return orders.filter((o) => !ACTIVE_ORDER_STATUSES.includes(o.status));
     return orders;
   }, [orders, filter]);
 
@@ -100,10 +100,23 @@ export function StudentOrderList({ orders }: { orders: StudentOrder[] }) {
                       <Clock3 size={14} /> {order.pickup_time_slot}
                     </span>
                     <span>{formatDateTime(order.created_at)}</span>
-                    <span className="tnum font-semibold text-ink">
-                      {formatRupiah(net)}
-                    </span>
+                    {order.payment_mode === "points" ? (
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-eco-700">
+                        <Coins size={14} className="shrink-0" />
+                        Sudah dibayar dengan poin ·{" "}
+                        <span className="tnum">{order.points_paid} P</span>
+                      </span>
+                    ) : (
+                      <span className="tnum font-semibold text-ink">{formatRupiah(net)}</span>
+                    )}
                   </div>
+
+                  {order.points_refunded > 0 ? (
+                    <p className="mt-2 inline-flex items-center gap-1.5 rounded-control bg-eco-50 px-3 py-1.5 text-small font-semibold text-eco-700">
+                      <RotateCcw size={14} className="shrink-0" />
+                      <span className="tnum">+{order.points_refunded} P</span> dikembalikan
+                    </p>
+                  ) : null}
 
                   <button
                     type="button"
