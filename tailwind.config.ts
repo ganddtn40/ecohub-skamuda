@@ -87,6 +87,10 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(24px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.96)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
         drift: {
           "0%, 100%": { transform: "translate3d(0, 0, 0) rotate(0deg)" },
           "50%": { transform: "translate3d(0, -14px, 0) rotate(-1.2deg)" },
@@ -104,6 +108,7 @@ const config: Config = {
         "fade-up": "fade-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both",
         "fade-in": "fade-in 240ms ease-out both",
         "sheet-up": "sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "scale-in": "scale-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both",
         drift: "drift 9s ease-in-out infinite",
         "ring-sweep": "ring-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) both",
         "slow-zoom": "slow-zoom 22s ease-in-out infinite alternate",

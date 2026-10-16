@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Camera, CameraOff, CheckCheck, ChefHat, PackageCheck, Search } from "lucide-react";
+import { AlertCircle, Camera, CameraOff, CheckCheck, PackageCheck, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { BookingTicket } from "@/components/student/BookingTicket";
 import { QrCamera } from "@/components/qr/QrCamera";
 import { ORDER_STATUS_META } from "@/lib/constants";
+import { mapOrderError } from "@/lib/order-errors";
 import type { OrderStatus, TicketData } from "@/types/database";
 
 interface VerifiedOrder extends TicketData {
@@ -17,10 +18,17 @@ interface VerifiedOrder extends TicketData {
   created_at: string;
 }
 
-const NEXT_ACTION: Partial<Record<OrderStatus, { next: OrderStatus; label: string; icon: typeof ChefHat }>> = {
-  pending: { next: "processing", label: "Mulai siapkan", icon: ChefHat },
-  processing: { next: "ready_for_pickup", label: "Siap diambil", icon: PackageCheck },
-  ready_for_pickup: { next: "completed", label: "Tandai sudah diambil", icon: CheckCheck },
+/**
+ * Aksi yang tersedia setelah tiket dipindai. Sama seperti papan penjual, semua
+ * perubahan status lewat `vendor_resolve_order` — `update` langsung ke tabel
+ * orders sudah dicabut policy-nya di migrasi 003.
+ */
+const NEXT_ACTION: Partial<
+  Record<OrderStatus, { action: "accept" | "ready" | "complete"; next: OrderStatus; label: string }>
+> = {
+  awaiting_approval: { action: "accept", next: "processing", label: "Terima Pesanan" },
+  processing: { action: "ready", next: "ready_for_pickup", label: "Siap diambil" },
+  ready_for_pickup: { action: "complete", next: "completed", label: "Tandai sudah diambil" },
 };
 
 const CODE_RE = /^SKM-I[12]-[A-Z0-9]{4}$/;
@@ -114,14 +122,14 @@ export function BookingVerifier() {
     setPending(true);
     setError(null);
     const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({ status: action.next })
-      .eq("id", order.id);
+    const { error: rpcError } = await supabase.rpc("vendor_resolve_order", {
+      p_order_id: order.id,
+      p_action: action.action,
+    });
     setPending(false);
 
-    if (updateError) {
-      setError(updateError.message);
+    if (rpcError) {
+      setError(mapOrderError(rpcError));
       return;
     }
 

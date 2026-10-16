@@ -8,6 +8,7 @@ import {
   CheckCheck,
   ChefHat,
   Clock3,
+  Coins,
   PackageCheck,
   StickyNote,
   User,
@@ -15,12 +16,14 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { ORDER_STATUS_META, STATUS_TONE } from "@/lib/constants";
+import { mapOrderError } from "@/lib/order-errors";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import type { OrderStatus } from "@/types/database";
+import type { OrderPaymentMode, OrderStatus } from "@/types/database";
 
 export interface VendorOrderItem {
   id: string;
@@ -39,37 +42,95 @@ export interface VendorOrder {
   discount_applied: number;
   notes: string | null;
   created_at: string;
+  payment_mode: OrderPaymentMode;
+  points_paid: number;
   student_name: string | null;
   student_class: string | null;
   stand_name: string | null;
   items: VendorOrderItem[];
 }
 
-const NEXT_ACTION: Partial<Record<OrderStatus, { next: OrderStatus; label: string; icon: typeof ChefHat }>> = {
-  pending: { next: "processing", label: "Mulai siapkan", icon: ChefHat },
-  processing: { next: "ready_for_pickup", label: "Siap diambil", icon: PackageCheck },
-  ready_for_pickup: { next: "completed", label: "Selesai diambil", icon: CheckCheck },
+type VendorAction = "accept" | "reject" | "ready" | "complete" | "unclaimed";
+
+/**
+ * Aksi yang tersedia untuk tiap status. Penjual tidak lagi mengubah status
+ * langsung ke tabel; setiap tombol di sini memanggil `vendor_resolve_order`,
+ * dan RPC itulah yang memutuskan transisinya sah atau tidak.
+ *
+ * Aksi yang merugikan siswa tidak langsung jalan: `ConfirmDialog` muncul lebih
+ * dulu, dan kalimatnya menyebut akibatnya — berapa poin yang hangus dan berapa
+ * lama blokirnya.
+ *
+ * Status `pending` sengaja tidak punya aksi. Itu nilai enum lama; sejak migrasi
+ * 003 semua pesanan baru lahir sebagai `awaiting_approval`, dan tidak ada satu
+ * pun baris `pending` di database.
+ */
+const ACTIONS: Partial<
+  Record<
+    OrderStatus,
+    {
+      primary: { action: VendorAction; label: string; icon: typeof ChefHat };
+      secondary?: {
+        action: VendorAction;
+        label: string;
+        icon: typeof ChefHat;
+        title: string;
+        description: string;
+        confirmLabel: string;
+      };
+    }
+  >
+> = {
+  awaiting_approval: {
+    primary: { action: "accept", label: "Terima Pesanan", icon: CheckCheck },
+    secondary: {
+      action: "reject",
+      label: "Tolak",
+      icon: Ban,
+      title: "Tolak pesanan ini?",
+      description:
+        "Pesanan dibatalkan dan poin yang sudah dibayarkan siswa dikembalikan penuh. Siswa bisa memesan lagi setelah ini.",
+      confirmLabel: "Tolak pesanan",
+    },
+  },
+  processing: {
+    primary: { action: "ready", label: "Siap Diambil", icon: PackageCheck },
+  },
+  ready_for_pickup: {
+    primary: { action: "complete", label: "Selesai Diambil", icon: CheckCheck },
+    secondary: {
+      action: "unclaimed",
+      label: "Tidak Diambil",
+      icon: Ban,
+      title: "Tandai tidak diambil?",
+      description:
+        "Tandai pesanan ini tidak diambil siswa. Pelanggaran pertama poinnya masih dikembalikan; pelanggaran kedua poinnya hangus dan pre-order siswa diblokir 3 hari.",
+      confirmLabel: "Tandai tidak diambil",
+    },
+  },
 };
 
 function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => void }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  const action = NEXT_ACTION[order.status];
+  const entry = ACTIONS[order.status];
   const meta = ORDER_STATUS_META[order.status];
   const net = order.total_price - order.discount_applied;
 
-  async function updateStatus(next: OrderStatus) {
+  async function resolve(action: VendorAction) {
     setPending(true);
     setError(null);
     const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({ status: next })
-      .eq("id", order.id);
+    const { error: rpcError } = await supabase.rpc("vendor_resolve_order", {
+      p_order_id: order.id,
+      p_action: action,
+    });
     setPending(false);
-    if (updateError) {
-      setError(updateError.message);
+    setConfirming(false);
+    if (rpcError) {
+      setError(mapOrderError(rpcError));
       return;
     }
     onChanged();
@@ -125,9 +186,20 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
         </div>
       ) : null}
 
-      <div className="mt-3 flex items-center justify-between pt-3">
+      <div className="mt-3 flex items-center justify-between gap-3 pt-3">
         <span className="text-small text-muted">{formatDateTime(order.created_at)}</span>
-        <span className="tnum text-[15px] font-bold text-ink">{formatRupiah(net)}</span>
+        {order.payment_mode === "points" ? (
+          <span className="inline-flex items-center gap-1.5 text-small font-semibold text-eco-700">
+            <Coins size={14} className="shrink-0" />
+            Sudah dibayar dengan poin ·{" "}
+            <span className="tnum">{order.points_paid} P</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-baseline gap-1.5">
+            <span className="tnum text-[15px] font-bold text-ink">{formatRupiah(net)}</span>
+            <span className="text-small font-medium text-muted">tunai di kantin</span>
+          </span>
+        )}
       </div>
 
       {error ? (
@@ -140,31 +212,43 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
         </p>
       ) : null}
 
-      <div className="mt-3 flex gap-2">
-        {action ? (
+      {entry ? (
+        <div className="mt-3 flex flex-wrap gap-2">
           <Button
             type="button"
             className="flex-1"
             disabled={pending}
-            onClick={() => updateStatus(action.next)}
+            onClick={() => void resolve(entry.primary.action)}
           >
-            {pending ? <Spinner className="text-white" /> : <action.icon size={18} />}
-            {action.label}
+            {pending ? <Spinner className="text-white" /> : <entry.primary.icon size={18} />}
+            {entry.primary.label}
           </Button>
-        ) : null}
 
-        {order.status === "pending" || order.status === "processing" ? (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={pending}
-            onClick={() => updateStatus("cancelled")}
-            aria-label="Batalkan pesanan"
-          >
-            <Ban size={18} />
-          </Button>
-        ) : null}
-      </div>
+          {entry.secondary ? (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={pending}
+              onClick={() => setConfirming(true)}
+            >
+              <entry.secondary.icon size={18} />
+              {entry.secondary.label}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {entry?.secondary ? (
+        <ConfirmDialog
+          open={confirming}
+          title={entry.secondary.title}
+          description={entry.secondary.description}
+          confirmLabel={entry.secondary.confirmLabel}
+          pending={pending}
+          onConfirm={() => void resolve(entry.secondary!.action)}
+          onClose={() => setConfirming(false)}
+        />
+      ) : null}
     </article>
   );
 }
@@ -175,7 +259,7 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
   const [status, setStatus] = useState<"aktif" | "selesai" | "semua">("aktif");
 
   const slots = Array.from(new Set(orders.map((order) => order.pickup_time_slot)));
-  const activeStatuses: OrderStatus[] = ["pending", "processing", "ready_for_pickup"];
+  const activeStatuses: OrderStatus[] = ["awaiting_approval", "processing", "ready_for_pickup"];
 
   const filtered = orders.filter((order) => {
     if (slot !== "semua" && order.pickup_time_slot !== slot) return false;
@@ -183,6 +267,8 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
     if (status === "selesai") return !activeStatuses.includes(order.status);
     return true;
   });
+
+  const waiting = orders.filter((order) => order.status === "awaiting_approval").length;
 
   return (
     <div>
@@ -237,6 +323,13 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
           })}
         </div>
       </div>
+
+      {waiting > 0 ? (
+        <p className="mt-3 inline-flex h-9 items-center gap-2 rounded-full bg-gold-50 px-3.5 text-small font-semibold text-gold-600">
+          <Clock3 size={14} />
+          Menunggu diterima: <span className="tnum">{waiting}</span>
+        </p>
+      ) : null}
 
       <div className="mt-4">
         {filtered.length === 0 ? (

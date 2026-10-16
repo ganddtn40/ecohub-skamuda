@@ -268,3 +268,240 @@ end $$;
 -- Fungsi security definer: cukup untuk peran yang sudah login.
 revoke execute on function public.place_order(uuid, text, text, jsonb, integer, text) from public, anon;
 grant execute on function public.place_order(uuid, text, text, jsonb, integer, text) to authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 4. vendor_resolve_order — satu-satunya jalan penjual mengubah status pesanan
+-- -----------------------------------------------------------------------------
+-- Sejak policy `orders_vendor_update` dicabut (bagian 6), penjual tidak bisa
+-- lagi menulis langsung ke tabel. Semua perpindahan status lewat sini, dan di
+-- sini pula aturannya ditegakkan: siapa yang boleh, transisi mana yang sah, dan
+-- poin siapa yang kembali.
+--
+-- Kenapa aturannya di database, bukan di klien: anon key dibagikan ke peramban
+-- dan siswa memegang token yang sah. Aturan yang hanya hidup di komponen React
+-- atau di Server Action bisa dilewati siapa pun yang punya keduanya. Kalimat
+-- yang sama berlaku untuk place_order di bagian 3.
+create or replace function public.vendor_resolve_order(p_order_id uuid, p_action text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid     uuid := auth.uid();
+  v_role    public.user_role;
+  v_order   public.orders;
+  v_owner   uuid;
+  v_next    public.order_status;
+  v_refund  integer := 0;
+  v_count   integer := 0;
+  v_blocked timestamptz;
+begin
+  if v_uid is null then
+    raise exception 'Harus login terlebih dahulu.';
+  end if;
+
+  select role into v_role from public.profiles where id = v_uid;
+  if v_role is distinct from 'canteen_vendor' then
+    raise exception 'Hanya penjual kantin yang dapat mengelola pesanan.';
+  end if;
+
+  select * into v_order from public.orders where id = p_order_id for update;
+  if not found then
+    raise exception 'Pesanan tidak ditemukan.';
+  end if;
+
+  -- security definer melewati RLS, jadi kepemilikan wajib diperiksa di sini.
+  -- Tanpa pemeriksaan ini, penjual mana pun bisa mengubah pesanan stand siapa
+  -- pun — cukup menebak satu uuid.
+  select s.vendor_id into v_owner
+  from public.canteen_stands s
+  where s.id = v_order.stand_id;
+
+  if v_owner is null or v_owner <> v_uid then
+    raise exception 'Pesanan ini bukan milik stand kamu.';
+  end if;
+
+  -- Transisi yang sah. Selain ini ditolak PZ005, termasuk mengulang aksi yang
+  -- sama dua kali: menandai "tidak diambil" pada pesanan yang sudah ditandai
+  -- tidak boleh menambah hitungan pelanggaran dua kali.
+  if p_action = 'accept' then
+    if v_order.status <> 'awaiting_approval' then
+      raise exception 'Pesanan ini sudah tidak menunggu diterima.' using errcode = 'PZ005';
+    end if;
+    v_next := 'processing';
+
+  elsif p_action = 'ready' then
+    if v_order.status <> 'processing' then
+      raise exception 'Pesanan ini belum masuk penyiapan.' using errcode = 'PZ005';
+    end if;
+    v_next := 'ready_for_pickup';
+
+  elsif p_action = 'complete' then
+    if v_order.status not in ('processing', 'ready_for_pickup') then
+      raise exception 'Pesanan ini tidak bisa diselesaikan dari status sekarang.' using errcode = 'PZ005';
+    end if;
+    v_next := 'completed';
+
+  elsif p_action = 'reject' then
+    if v_order.status <> 'awaiting_approval' then
+      raise exception 'Pesanan yang sudah diterima tidak bisa ditolak lagi.' using errcode = 'PZ005';
+    end if;
+    v_next := 'cancelled';
+
+  elsif p_action = 'unclaimed' then
+    if v_order.status <> 'ready_for_pickup' then
+      raise exception 'Hanya pesanan yang siap diambil bisa ditandai tidak diambil.' using errcode = 'PZ005';
+    end if;
+    v_next := 'unclaimed';
+
+  else
+    raise exception 'Aksi tidak dikenal: %.', p_action;
+  end if;
+
+  update public.orders set status = v_next where id = v_order.id
+  returning * into v_order;
+
+  -- Poin kembali penuh saat penjual menolak, dan saat pelanggaran pertama.
+  -- Pelanggaran kedua menghanguskan poin sekaligus memasang blokir 3 hari:
+  -- pelanggaran pertama dimaafkan, pelanggaran kedua tidak.
+  if v_next = 'cancelled' then
+    v_refund := v_order.points_paid;
+
+  elsif v_next = 'unclaimed' then
+    select coalesce(p.unclaimed_orders_count, 0) into v_count
+    from public.profiles p
+    where p.id = v_order.student_id;
+
+    if v_count = 0 then
+      v_refund  := v_order.points_paid;
+      v_count   := 1;
+      v_blocked := null;
+    else
+      v_refund  := 0;
+      v_count   := v_count + 1;
+      v_blocked := now() + interval '3 days';
+    end if;
+  end if;
+
+  if v_next in ('cancelled', 'unclaimed') then
+    perform set_config('app.allow_profile_system_update', 'on', true);
+
+    if v_next = 'unclaimed' then
+      update public.profiles
+         set points_balance = points_balance + v_refund,
+             unclaimed_orders_count = v_count,
+             preorder_blocked_until = v_blocked
+       where id = v_order.student_id;
+    else
+      update public.profiles
+         set points_balance = points_balance + v_refund
+       where id = v_order.student_id;
+    end if;
+  end if;
+
+  if v_refund > 0 then
+    update public.orders
+       set points_refunded = points_refunded + v_refund
+     where id = v_order.id
+    returning * into v_order;
+
+    -- Jejak voucher: yang dikembalikan tidak boleh menghilang tanpa catatan.
+    update public.vouchers
+       set refunded_at = now()
+     where order_id = v_order.id and refunded_at is null;
+  end if;
+
+  -- Dibaca ulang setelah semua perubahan supaya balikannya mencerminkan keadaan
+  -- sesudah, bukan sebelum.
+  select coalesce(p.unclaimed_orders_count, 0), p.preorder_blocked_until
+    into v_count, v_blocked
+  from public.profiles p
+  where p.id = v_order.student_id;
+
+  return jsonb_build_object(
+    'order_id', v_order.id,
+    'status', v_order.status,
+    'points_refunded', v_order.points_refunded,
+    'unclaimed_count', v_count,
+    'blocked_until', v_blocked
+  );
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 5. get_preorder_status — keadaan pre-order siswa yang sedang login
+-- -----------------------------------------------------------------------------
+-- Dipakai halaman kantin siswa untuk memutuskan mana dari tiga tampilan yang
+-- harus muncul: blokir, ada pesanan aktif, atau bebas memesan. Sengaja TIDAK
+-- mengembalikan points_balance: saldo sudah dibaca dari tabel profil, dan dua
+-- sumber untuk satu angka cepat atau lambat akan berbeda.
+create or replace function public.get_preorder_status()
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  v_uid     uuid := auth.uid();
+  v_profile public.profiles;
+  v_active  public.orders;
+begin
+  if v_uid is null then
+    raise exception 'Harus login terlebih dahulu.';
+  end if;
+
+  select * into v_profile from public.profiles where id = v_uid;
+  if not found then
+    raise exception 'Profil tidak ditemukan.';
+  end if;
+
+  -- Reset malas, sama seperti di place_order: satu-satunya dua tempat yang
+  -- boleh menyimpulkan blokir sudah lewat. Tanpa cron, dan tanpa kolom yang
+  -- perlu dirapikan orang lain — hitungannya dirapikan saat ada yang melihat.
+  if v_profile.preorder_blocked_until is not null
+     and v_profile.preorder_blocked_until <= now() then
+    perform set_config('app.allow_profile_system_update', 'on', true);
+    update public.profiles
+       set unclaimed_orders_count = 0,
+           preorder_blocked_until = null
+     where id = v_uid
+    returning * into v_profile;
+    perform set_config('app.allow_profile_system_update', 'off', true);
+  end if;
+
+  select * into v_active
+  from public.orders
+  where student_id = v_uid
+    and status in ('awaiting_approval', 'processing', 'ready_for_pickup')
+  order by created_at desc
+  limit 1;
+
+  return jsonb_build_object(
+    'is_blocked', v_profile.preorder_blocked_until is not null,
+    'blocked_until', v_profile.preorder_blocked_until,
+    'unclaimed_count', v_profile.unclaimed_orders_count,
+    'active_order_id', v_active.id,
+    'active_order_status', v_active.status,
+    'active_booking_code', v_active.booking_code
+  );
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 6. Cabut jalan lama
+-- -----------------------------------------------------------------------------
+-- Policy ini dulu memberi penjual hak `update` langsung ke tabel orders, tanpa
+-- aturan transisi apa pun: dari 'pending' bisa langsung ke 'completed', atau
+-- ke 'cancelled' dengan poin yang tidak pernah kembali. Setelah pengelolaan
+-- pindah ke vendor_resolve_order, policy ini dicabut supaya tidak ada jalan
+-- belakang yang melewati aturannya.
+--
+-- Penjual tetap bisa MEMBACA pesanannya lewat orders_vendor_read; yang dicabut
+-- hanya kemampuan menulis langsung.
+drop policy if exists orders_vendor_update on public.orders;
+
+-- Fungsi security definer: cukup untuk peran yang sudah login.
+revoke execute on function public.vendor_resolve_order(uuid, text) from public, anon;
+grant execute on function public.vendor_resolve_order(uuid, text) to authenticated;
+revoke execute on function public.get_preorder_status() from public, anon;
+grant execute on function public.get_preorder_status() to authenticated;

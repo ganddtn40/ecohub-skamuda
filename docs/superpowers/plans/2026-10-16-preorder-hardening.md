@@ -463,7 +463,14 @@ di mana papan penjual rusak.
 - Create: `supabase/tests/003_preorder_resolution.sql`
 - Create: `src/components/ui/ConfirmDialog.tsx`
 - Modify: `src/components/vendor/OrderBoard.tsx`
+- Modify: `src/components/vendor/BookingVerifier.tsx`
 - Modify: `src/app/(app)/kantin/page.tsx`
+
+**Koreksi saat pengerjaan (Task 4):** `BookingVerifier.tsx` tidak ada di daftar awal, padahal
+ia jalur kedua yang mengubah status pesanan — `update` langsung ke tabel, dipakai
+`/kantin/scan`. Begitu policy `orders_vendor_update` dicabut, `update` seperti itu tetap
+mengembalikan sukses dengan nol baris: penjual melihat "Status diperbarui" padahal tidak ada
+yang berubah. Jadi ia dipindah ke `vendor_resolve_order` di task ini juga, bukan menunggu.
 
 **Interfaces:**
 - Consumes: `place_order` dari Task 3, `mapOrderError` dari Task 2.
@@ -585,6 +592,14 @@ Di `src/components/vendor/OrderBoard.tsx`:
 Di `src/app/(app)/kantin/page.tsx`, tambahkan `payment_mode, points_paid` ke `select(...)` dan
 ke pemetaan `VendorOrder`.
 
+- [ ] **Step 9b: Pindahkan `BookingVerifier.tsx` ke RPC juga**
+
+Tambahan dari koreksi di atas. Di `src/components/vendor/BookingVerifier.tsx`, ganti
+`NEXT_ACTION` supaya berkunci pada `awaiting_approval` (bukan `pending`) dan berisi nama aksi
+plus status tujuan; lalu ganti `supabase.from("orders").update({ status })` menjadi
+`supabase.rpc("vendor_resolve_order", { p_order_id, p_action })` dengan pesan error lewat
+`mapOrderError`.
+
 - [ ] **Step 10: Verifikasi di peramban**
 
 Jalankan `npm run dev`. Masuk sebagai `kantin.berkah@skamuda.sch.id`. Lakukan alur penuh pada
@@ -666,6 +681,15 @@ git commit -m "feat(vendor): alert on new orders and count the queue"
 - Create: `scripts/check-preorder-rules.ts`
 - Modify: `src/components/student/MenuCatalog.tsx`
 - Modify: `src/components/student/BookingTicket.tsx`
+- Modify: `src/app/(app)/siswa/pesanan/page.tsx`
+- Modify: `src/components/vendor/BookingVerifier.tsx`
+
+**Koreksi saat pengerjaan (Task 4):** dua berkas terakhir ikut tersentuh di task ini. Begitu
+`TicketData.payment_mode` dan `points_paid` menjadi wajib di Task 2, setiap tempat yang
+menyusun `TicketData` harus mengisinya — dan ada empat tempat, bukan dua: `MenuCatalog.tsx`,
+`BookingTicket.tsx`, `app/(app)/siswa/pesanan/page.tsx`, dan `components/vendor/BookingVerifier.tsx`.
+`tsc` baru akan menangkapnya saat field-nya benar-benar dipakai, jadi keempatnya dikerjakan
+bersamaan di sini.
 
 **Interfaces:**
 - Consumes: `TicketData` dan `OrderPaymentMode` dari Task 2; `place_order` v2 dari Task 3;

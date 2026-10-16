@@ -6,7 +6,7 @@ import { PageTitle } from "@/components/layout/PageTitle";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { OrderBoard, type VendorOrder } from "@/components/vendor/OrderBoard";
 import { unwrap } from "@/lib/query";
-import type { OrderStatus } from "@/types/database";
+import type { OrderPaymentMode, OrderStatus } from "@/types/database";
 
 export const metadata = { title: "Pesanan Masuk" };
 export const revalidate = 0;
@@ -20,6 +20,8 @@ interface RawOrder {
   discount_applied: number;
   notes: string | null;
   created_at: string;
+  payment_mode: OrderPaymentMode;
+  points_paid: number;
   canteen_stands: { stand_name: string } | null;
   profiles: { full_name: string; class_name: string | null } | null;
   order_items: Array<{
@@ -50,7 +52,7 @@ export default async function VendorOrdersPage() {
       await supabase
         .from("orders")
         .select(
-          "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), profiles(full_name, class_name), order_items(id, quantity, unit_price, item_notes, menu_items(name))",
+          "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, payment_mode, points_paid, canteen_stands(stand_name), profiles(full_name, class_name), order_items(id, quantity, unit_price, item_notes, menu_items(name))",
         )
         .in("stand_id", standIds)
         .order("created_at", { ascending: false })
@@ -66,6 +68,8 @@ export default async function VendorOrdersPage() {
       discount_applied: order.discount_applied,
       notes: order.notes,
       created_at: order.created_at,
+      payment_mode: order.payment_mode,
+      points_paid: order.points_paid,
       student_name: order.profiles?.full_name ?? null,
       student_class: order.profiles?.class_name ?? null,
       stand_name: order.canteen_stands?.stand_name ?? null,
