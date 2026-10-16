@@ -51,16 +51,25 @@ export const ROLE_LABEL: Record<UserRole, string> = {
 };
 
 export const ORDER_STATUS_META: Record<OrderStatus, { label: string; hint: string }> = {
-  pending: { label: "Menunggu", hint: "Pesanan baru masuk, belum diproses." },
+  awaiting_approval: {
+    label: "Menunggu Diterima",
+    hint: "Pesanan baru masuk, menunggu penjual menerima.",
+  },
   processing: { label: "Disiapkan", hint: "Sedang disiapkan oleh penjual." },
   ready_for_pickup: { label: "Siap Diambil", hint: "Sudah siap, silakan ambil di stand." },
   completed: { label: "Selesai", hint: "Pesanan sudah diambil siswa." },
-  cancelled: { label: "Dibatalkan", hint: "Pesanan dibatalkan." },
+  cancelled: { label: "Ditolak", hint: "Pesanan ditolak penjual. Poinmu sudah dikembalikan." },
+  unclaimed: {
+    label: "Tidak Diambil",
+    hint: "Pesanan tidak diambil sampai batas waktu.",
+  },
+  // Pensiunan: hanya muncul pada pesanan lama sebelum migrasi 002.
+  pending: { label: "Menunggu", hint: "Pesanan baru masuk, belum diproses." },
 };
 
 /** Urutan transisi status pada papan kelola kantin. */
 export const ORDER_STATUS_FLOW: OrderStatus[] = [
-  "pending",
+  "awaiting_approval",
   "processing",
   "ready_for_pickup",
   "completed",
@@ -77,9 +86,11 @@ export const STATUS_TONE: Record<
   OrderStatus,
   "neutral" | "green" | "amber" | "red" | "blue"
 > = {
-  pending: "amber",
+  awaiting_approval: "amber",
   processing: "blue",
   ready_for_pickup: "green",
   completed: "neutral",
   cancelled: "red",
+  unclaimed: "red",
+  pending: "amber",
 };

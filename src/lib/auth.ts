@@ -10,7 +10,7 @@ export interface SessionProfile {
 }
 
 const PROFILE_COLUMNS =
-  "id, full_name, class_name, role, points_balance, total_recycled_kg, qr_code_token, created_at, updated_at";
+  "id, full_name, class_name, role, points_balance, total_recycled_kg, qr_code_token, unclaimed_orders_count, preorder_blocked_until, created_at, updated_at";
 
 /** Ambil user + profile dari session cookie. Null bila belum login / profile hilang. */
 export async function getSessionProfile(): Promise<SessionProfile | null> {

@@ -1,11 +1,21 @@
 export type UserRole = "student" | "waste_officer" | "canteen_vendor";
 
 export type OrderStatus =
-  | "pending"
+  | "awaiting_approval"
   | "processing"
   | "ready_for_pickup"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "unclaimed"
+  /**
+   * Pensiunan. Nilainya masih ada di tipe enum Postgres dan masih dibaca untuk
+   * pesanan lama, tetapi tidak pernah dibuat lagi sejak migrasi 002. Dibiarkan
+   * ada supaya pesanan warisan tetap bisa dirender.
+   */
+  | "pending";
+
+/** Cara pesanan dibayar: tunai di kantin, atau lunas penuh dengan poin. */
+export type OrderPaymentMode = "cash" | "points";
 
 export interface Profile {
   id: string;
@@ -15,6 +25,10 @@ export interface Profile {
   points_balance: number;
   total_recycled_kg: number;
   qr_code_token: string;
+  /** Jumlah pelanggaran "tidak diambil" berjalan. Pelanggaran ke-2 memicu blokir. */
+  unclaimed_orders_count: number;
+  /** Batas akhir blokir pre-order. Null berarti tidak sedang diblokir. */
+  preorder_blocked_until: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,6 +96,10 @@ export interface Voucher {
   code: string;
   created_at: string;
   used_at: string | null;
+  /** Pesanan yang memakai voucher ini, supaya pengembaliannya bisa dilacak. */
+  order_id: string | null;
+  /** Diisi saat poin voucher dikembalikan ke siswa. */
+  refunded_at: string | null;
 }
 
 export interface Order {
@@ -94,6 +112,15 @@ export interface Order {
   discount_applied: number;
   status: OrderStatus;
   notes: string | null;
+  payment_mode: OrderPaymentMode;
+  /**
+   * Poin yang didebit saat checkout. Untuk mode cash berisi biaya voucher,
+   * untuk mode points berisi harga penuh. Karena itu pengembaliannya selalu
+   * sebesar kolom ini, tanpa perlu bercabang per mode.
+   */
+  points_paid: number;
+  /** Poin yang sudah dikembalikan ke siswa. */
+  points_refunded: number;
   created_at: string;
   updated_at: string;
 }
@@ -155,4 +182,14 @@ export interface TicketData {
   stand_name: string | null;
   created_at?: string;
   items: TicketItem[];
+}
+
+/** Hasil RPC get_preorder_status(): keadaan pre-order satu siswa. */
+export interface PreorderStatus {
+  is_blocked: boolean;
+  blocked_until: string | null;
+  unclaimed_count: number;
+  active_order_id: string | null;
+  active_order_status: OrderStatus | null;
+  active_booking_code: string | null;
 }
