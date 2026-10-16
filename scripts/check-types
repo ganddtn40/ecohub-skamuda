@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Gerbang tipe: `tsc --noEmit` yang selalu bicara.
+#
+# `npx tsc --noEmit` diam kalau tidak ada error, dan itu merepotkan dua hal:
+# orang yang membaca log tidak tahu apakah tsc benar-benar jalan, dan
+# task-done (yang mencari baris terakhir di log) tersandung pada log kosong.
+# Skrip ini mencetak hasilnya.
+#
+#   bash scripts/check-types
+set -euo pipefail
+
+npx tsc --noEmit
+echo "tsc: 0 error"
