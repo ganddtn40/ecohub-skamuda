@@ -78,9 +78,13 @@ export function RegisterForm({ classes }: { classes: SchoolClass[] }) {
 
   const noClasses = classes.length === 0;
 
+  // Kiriman asli peramban — yang terjadi kalau tombol kirim ditekan sebelum React
+  // mengambil alih form — harus POST. Tanpa `method`, peramban memakai GET dan
+  // kata sandi berakhir di URL, riwayat peramban, dan log server.
   return (
     <form
       onSubmit={handleSubmit}
+      method="post"
       className="animate-fade-up rounded-card bg-white p-6 sm:p-8"
       noValidate
     >

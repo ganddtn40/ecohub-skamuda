@@ -1152,11 +1152,19 @@ tetapi halaman masuk dan daftar memakainya, dan keduanya bisa kena batas yang sa
 - Create: `src/app/(auth)/reset-password/page.tsx`
 - Modify: `src/lib/auth-errors.ts`
 - Modify: `src/app/auth/callback/route.ts`
+- Modify: `src/components/auth/LoginForm.tsx` (tambah `method="post"`)
+- Modify: `src/components/auth/RegisterForm.tsx` (tambah `method="post"`)
+- Modify: `src/components/auth/ForgotPasswordForm.tsx` (tambah `method="post"`)
 
 **Interfaces:**
 - Consumes: `ROUTE.resetPassword` dan `PUBLIC_PATHS` dari Task 9; `/auth/callback` yang sudah
   menangani `type=recovery` dan meneruskan `next`.
 - Produces: tidak ada tipe baru.
+
+**Catatan verifikasi:** Step 6 rencananya menunggu satu email sungguhan. Itu tidak mungkin di
+proyek ini (lihat temuan Task 9), jadi digantikan oleh tautan yang diterbitkan Admin API lewat
+jalur `token_hash` yang memang sudah didukung `/auth/callback`. Yang belum terbukti tinggal
+pengiriman emailnya — di luar jangkauan kode aplikasi.
 
 - [ ] **Step 1: Tulis `ResetPasswordForm`**
 
@@ -1168,9 +1176,29 @@ lalu arahkan ke `ROLE_HOME` sesuai peran. Pesan errornya lewat `mapAuthError`.
 Bila tidak ada sesi saat komponen dipasang, jangan render formnya — render keadaan
 "Tautan tidak valid atau sudah kedaluwarsa" beserta tautan ke `/lupa-password`.
 
+**Pelaksanaannya.** Komponennya punya tiga keadaan, bukan dua: `memeriksa`, `siap`, dan
+`kedaluwarsa`. Keadaan ketiga muncul untuk dua sebab yang berbeda — ada tanda `?error=` dari
+`/auth/callback`, atau `getUser()` tidak mengembalikan pengguna — dan keduanya berakhir di
+tampilan yang sama karena bagi pengguna keduanya sama saja.
+
+Panjang minimumnya **8 karakter**, bukan 6 seperti bawaan Supabase, supaya sama dengan
+`RegisterForm`. Kalau berbeda, orang bisa mendaftar dengan 8 karakter lalu menggantinya dengan
+6. Pemeriksaannya berurutan: panjang dulu, baru kecocokan, baru server — supaya pesan yang
+muncul memang penyebab yang paling awal bisa diketahui pengguna.
+
+Peran dibaca sekali saat memeriksa sesi, bukan setelah menyimpan. Sesudah `updateUser`
+berhasil, `signOut({ scope: "others" })` dan pengalihan terjadi berurutan, dan membaca peran
+di antara keduanya hanya menambah satu permintaan yang bisa gagal di saat yang paling tidak
+nyaman untuk gagal.
+
 - [ ] **Step 2: Tulis halaman `/reset-password`**
 
 Halaman server tipis yang merender `ResetPasswordForm` di dalam shell `(auth)`.
+
+Dibungkus `Suspense` seperti halaman masuk, karena komponennya membaca `useSearchParams`.
+Bedanya, `fallback`-nya di sini tidak pernah terlihat lama: komponennya langsung memeriksa sesi
+dan menampilkan kerangkanya sendiri, jadi yang muncul berurutan adalah kerangka halaman lalu
+kerangka kartu, bukan layar kosong.
 
 - [ ] **Step 3: Arahkan kegagalan recovery ke halaman yang benar**
 
@@ -1186,12 +1214,33 @@ Focus nomor 5.
 Di `src/lib/auth-errors.ts`, tambahkan pemetaan untuk error kedaluwarsa/tidak sah dan untuk
 kata sandi terlalu lemah, dalam bahasa Indonesia.
 
+**Tambahan di luar rencana, dan alasannya.** Saat menguji Step 5, salah satu pengiriman form
+mendarat di peramban sebagai **kiriman asli** — bukan lewat React — dan hasilnya terbaca di log
+server pengembangan: `GET /login?email=…&password=…`. Penyebabnya `<form>` di keempat halaman
+auth tidak punya `method`, dan bawaan peramban untuk itu adalah GET. Konsekuensinya kata sandi
+ikut tercatat di URL, riwayat peramban, dan log server. Pemicunya adalah menekan tombol kirim
+sebelum React mengambil alih form — biasa terjadi di HP lambat, yang justru jadi alasan Task 8
+ada.
+
+Keempat form (`LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm`) sekarang
+memakai `method="post"`, dengan komentar di atas masing-masing agar tidak dianggap sisa dan
+dihapus. Diuji dengan `form.submit()`, yang melewati seluruh penangan React — persis keadaan
+sebelum React mengambil alih: URL tetap `/login` tanpa membawa kata sandi maupun email.
+
+Pemetaan yang ditambahkan: "invalid or has expired", "should be different from the old
+password", dan "weak password".
+
 - [ ] **Step 5: Verifikasi yang bisa dilakukan tanpa email**
 
 Buka `/reset-password` tanpa sesi. Expected: keadaan "Tautan tidak valid atau sudah
 kedaluwarsa" muncul, bukan form kosong dan bukan error mentah. Buka
 `/auth/callback?type=recovery&error=access_denied`. Expected: mendarat di
 `/reset-password` dengan pesan kedaluwarsa, bukan di `/login`.
+
+Keduanya sesuai harapan, terbaca dari DOM dan bukan dari tangkapan layar: halaman tanpa sesi
+tidak merender `<form>` sama sekali dan menautkan ke `/lupa-password`; callback yang gagal
+mendarat di `/reset-password?error=kedaluwarsa`. Callback biasa yang gagal (tanpa tanda
+recovery) tetap mendarat di `/login?error=verifikasi` — tidak ada yang berubah di sana.
 
 - [ ] **Step 6: Verifikasi yang butuh email sungguhan (butuh tangan pengguna)**
 
@@ -1201,12 +1250,40 @@ sama: form ganti sandi muncul, sandi baru tersimpan, dan login dengan sandi baru
 Buka tautan kedua di peramban berbeda: harus muncul keadaan kedaluwarsa, bukan lemparan diam
 ke `/login`. Catat hasilnya; task ini belum selesai sebelum ini lulus.
 
+**Tidak bisa dijalankan seperti tertulis, dan digantikan dengan cara yang setara.** Task 9
+sudah menunjukkan proyek ini belum bisa mengirim email sama sekali: domainnya tidak ada di DNS
+dan SMTP-nya bawaan Supabase. Jadi menunggu email sungguhan berarti menunggu pekerjaan yang
+bukan milik kode ini.
+
+Gantinya, tautan pemulihannya dibuat lewat Admin API (`generate_link`), yang menerbitkan token
+sah **tanpa mengirim email apa pun**, lalu token itu diumpankan ke
+`/auth/callback?token_hash=…&type=recovery&next=/reset-password`. Itu bukan jalan pintas: jalur
+`token_hash` memang sudah didukung `/auth/callback` sejak awal, dan yang diuji tetap komponen
+yang sama. Yang belum terbukti hanyalah pengiriman emailnya sendiri.
+
+Hasilnya, semuanya terukur:
+
+| Yang diuji | Hasil |
+|---|---|
+| Callback dengan token sah | mendarat di `/reset-password`, form ganti sandi muncul dengan kedua kolom |
+| Ulangan kata sandi dibedakan | "Ulangan kata sandi belum sama.", halaman tidak berpindah |
+| Kata sandi 6 karakter | "Kata sandi minimal 8 karakter.", halaman tidak berpindah |
+| Simpan kata sandi baru | berpindah ke `/siswa` sebagai pengguna yang sudah masuk |
+| Masuk dengan kata sandi baru | berhasil, mendarat di `/siswa` |
+| Membuka tautan yang sama untuk kedua kali | keadaan "Tautan tidak berlaku lagi", bukan lemparan ke `/login` |
+
+Sandi akun demo dikembalikan ke nilai yang tercatat sesudahnya, dan masuk dengan sandi itu
+diperiksa ulang. Yang masih tersisa untuk pengguna tetap sama seperti temuan Task 9: selama
+domain dan SMTP belum dibetulkan, surat resetnya tidak akan pernah sampai.
+
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/components/auth/ResetPasswordForm.tsx "src/app/(auth)/reset-password/page.tsx" src/lib/auth-errors.ts src/app/auth/callback/route.ts
+git add src/components/auth/ResetPasswordForm.tsx "src/app/(auth)/reset-password/page.tsx" src/lib/auth-errors.ts src/app/auth/callback/route.ts src/components/auth/LoginForm.tsx src/components/auth/RegisterForm.tsx src/components/auth/ForgotPasswordForm.tsx
 git commit -m "feat(auth): set a new password, and explain expired links"
 ```
+
+Dua form lama ikut karena penambahan `method="post"` di Step 4.
 
 ---
 

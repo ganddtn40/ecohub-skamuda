@@ -9,5 +9,11 @@ export function mapAuthError(message: string): string {
   if (text.includes("for security purposes"))
     return "Terlalu banyak percobaan dari perangkat ini. Tunggu sebentar, lalu coba lagi.";
   if (text.includes("unable to validate email")) return "Format email tidak valid.";
+  if (text.includes("invalid or has expired"))
+    return "Tautan sudah tidak berlaku. Minta tautan reset yang baru.";
+  if (text.includes("should be different from the old password"))
+    return "Kata sandi baru harus berbeda dari kata sandi lama.";
+  if (text.includes("weak password") || text.includes("password is too weak"))
+    return "Kata sandi terlalu mudah ditebak. Pakai huruf dan angka.";
   return message;
 }

@@ -26,5 +26,15 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
 
+  // Gagal. Tautan reset yang tidak bisa ditukar harus mendarat di halaman yang
+  // bisa menjelaskan dirinya sendiri, bukan di halaman masuk dengan pesan
+  // "verifikasi email gagal" yang tidak ada hubungannya dengan yang dialami
+  // pengguna. Penyebab tersering: tautannya sudah dipakai sekali, sudah lewat
+  // masa berlaku, atau dibuka di peramban lain tempat kode PKCE-nya tidak ada.
+  const recovery = type === "recovery" || next === ROUTE.resetPassword;
+  if (recovery) {
+    return NextResponse.redirect(`${origin}${ROUTE.resetPassword}?error=kedaluwarsa`);
+  }
+
   return NextResponse.redirect(`${origin}${ROUTE.login}?error=verifikasi`);
 }

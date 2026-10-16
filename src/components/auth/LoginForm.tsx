@@ -53,9 +53,13 @@ export function LoginForm() {
     router.refresh();
   }
 
+  // Kiriman asli peramban — yang terjadi kalau tombol kirim ditekan sebelum React
+  // mengambil alih form — harus POST. Tanpa `method`, peramban memakai GET dan
+  // kata sandi berakhir di URL, riwayat peramban, dan log server.
   return (
     <form
       onSubmit={handleSubmit}
+      method="post"
       className="animate-fade-up rounded-card bg-white p-6 sm:p-8"
       noValidate
     >
