@@ -1,10 +1,10 @@
 import { Store } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { OrderBoard, type VendorOrder } from "@/components/vendor/OrderBoard";
+import { OrderFeed } from "@/components/vendor/OrderFeed";
+import type { VendorOrder } from "@/components/vendor/OrderBoard";
 import { unwrap } from "@/lib/query";
 import type { OrderPaymentMode, OrderStatus } from "@/types/database";
 
@@ -85,11 +85,6 @@ export default async function VendorOrdersPage() {
 
   return (
     <div>
-      <RealtimeRefresher
-        channelName={`vendor-orders-${profile.id}`}
-        subscriptions={[{ table: "orders" }, { table: "order_items" }]}
-      />
-
       <PageTitle
         title="Pesanan Masuk"
         description="Pesanan baru muncul otomatis tanpa refresh. Kelola statusnya dan baca catatan khusus dari siswa."
@@ -103,7 +98,14 @@ export default async function VendorOrdersPage() {
             description="Hubungi admin sekolah untuk mendaftarkan stand pada akun kamu sebelum menerima pesanan."
           />
         ) : (
-          <OrderBoard orders={orders} />
+          // Langganan realtime ikut pindah ke dalam OrderFeed, jadi tanpa stand
+          // tidak ada yang dipantau. Halaman ini memang cuma menampilkan pesan
+          // statis sampai standnya ada.
+          <OrderFeed
+            orders={orders}
+            standIds={standIds}
+            channelName={`vendor-orders-${profile.id}`}
+          />
         )}
       </div>
     </div>

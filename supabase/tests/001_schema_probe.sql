@@ -1,11 +1,11 @@
--- Probe skema pengerasan pre-order (migrasi 002).
+-- Probe skema pengerasan pre-order (migrasi 002 dan 004).
 --
 -- Satu blok `do` yang mengumpulkan hasil lalu SELALU mengakhiri dengan
 -- `raise exception`. Akibatnya transaksinya selalu di-rollback dan barisnya
 -- tetap terbaca di panel Messages SQL Editor (atau lewat scripts/db.mjs).
 --
 --   Sebelum migrasi 002  -> MERAH, dengan beberapa baris "GAGAL: ... does not exist".
---   Sesudah migrasi 002  -> HIJAU, dua belas baris LULUS dan nol GAGAL.
+--   Sesudah migrasi 002  -> HIJAU, semua baris LULUS dan nol GAGAL.
 --
 -- Catatan penting soal bentuk berkas ini:
 --   * Hasil dikumpulkan dengan array_append. Menulis `v_results || 'teks'`
@@ -175,6 +175,18 @@ begin
       else 'GAGAL: ditolak, tapi bukan oleh guard -> ' || sqlerrm end);
   end;
 
-  raise exception E'\n===== HASIL PROBE SKEMA (migrasi 002) =====\n%\n============================================',
+  ------------------------------------------------ identitas replika (migrasi 004)
+  -- Peristiwa UPDATE/DELETE lewat realtime harus membawa baris lama yang utuh
+  -- supaya policy RLS bisa dinilai.
+  select bool_and(c.relreplident = 'f') into v_hit
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public'
+    and c.relname in ('orders', 'order_items');
+  v_results := array_append(v_results, case when v_hit
+    then 'LULUS: identitas replika orders dan order_items penuh'
+    else 'GAGAL: identitas replika orders/order_items belum penuh' end);
+
+  raise exception E'\n===== HASIL PROBE SKEMA (migrasi 002 dan 004) =====\n%\n====================================================',
     array_to_string(v_results, E'\n');
 end $$;

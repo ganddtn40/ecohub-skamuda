@@ -619,15 +619,21 @@ git commit -m "feat(vendor): accept or reject orders through an RPC with confirm
 
 **Files:**
 - Create: `src/components/ui/Toast.tsx`
+- Create: `src/components/vendor/OrderFeed.tsx`
 - Modify: `src/components/realtime/RealtimeRefresher.tsx`
+- Modify: `src/components/vendor/OrderBoard.tsx`
 - Modify: `src/app/(app)/layout.tsx`
 - Modify: `src/app/(app)/kantin/page.tsx`
+- Create: `supabase/migrations/004_realtime_replica_identity.sql`
+- Modify: `supabase/tests/001_schema_probe.sql`
 
 **Interfaces:**
 - Consumes: `RealtimeRefresher` yang sudah ada dan `OrderBoard` dari Task 4.
 - Produces:
   - `ToastProvider` (client) dan `useToast()` → `{ show(message: string, options?: { actionLabel?: string; onAction?: () => void }): void }`
   - `RealtimeRefresher` bertambah prop opsional `onInsert?: (table: string, row: Record<string, unknown>) => void`
+  - `OrderFeed` (client) — pemilik filter status papan sekaligus pemicu toast
+  - `OrderBoard` menerima `status` dan `onStatusChange`; tipe `OrderFilter` diekspor
 
 - [ ] **Step 1: Tulis `src/components/ui/Toast.tsx`**
 
@@ -647,28 +653,54 @@ perilaku yang sudah ada saat propnya tidak diberikan.
 
 - [ ] **Step 4: Munculkan toast di papan penjual**
 
-Di `src/app/(app)/kantin/page.tsx`, kirim `onInsert` yang memunculkan
-"Pesanan baru · <pickup_time_slot> · <booking_code>" beserta aksi "Lihat" yang menyaring
-papan ke `awaiting_approval`.
+Toast dipicu dari `OrderFeed` — komponen client baru yang membungkus `RealtimeRefresher` dan
+`OrderBoard`. Filternya harus pindah ke sana karena aksi "Lihat" pada toast perlu
+memindahkannya, dan `kantin/page.tsx` adalah Server Component yang tidak bisa memegang hook.
+Isi toast: "Pesanan baru · <pickup_time_slot> · <booking_code>" dengan aksi "Lihat" yang
+menyaring papan ke `awaiting_approval`.
 
 - [ ] **Step 5: Tambah penghitung pesanan menunggu diterima**
 
-Tambahkan chip di atas papan: "Menunggu diterima: n".
+Angkanya menempel pada tab "Menunggu" di baris filter status, bukan chip terpisah di atas
+papan. Dua kontrol untuk saringan yang sama hanya membuat penjual ragu harus menekan yang mana.
 
 **Catatan penyimpangan dari spec, disengaja:** spec menyebut filter bawaan mengarah ke
 `awaiting_approval`. Itu akan menyembunyikan pesanan yang sedang disiapkan dari penjual, yang
 adalah kemunduran operasional. Jadi filter bawaan tetap `aktif`, dan penyaringan ke
 `awaiting_approval` terjadi lewat aksi "Lihat" pada toast — dipicu pengguna, tidak permanen.
 
+**Catatan penyimpangan saat pengerjaan, disengaja — realtime INSERT tidak sampai.** Selama
+pengerjaan Task 5, peristiwa INSERT untuk `orders` terbukti **tidak pernah** sampai ke klien,
+sementara UPDATE dan DELETE sampai. Sudah diperiksa dan bukan setelan yang bisa dibetulkan dari
+sini: `orders` ada di publikasi `supabase_realtime`, `wal_level` = logical, semua flag
+publikasi menyala, `replica identity` = full, dan penjual memang boleh membaca barisnya di
+bawah RLS (diuji dengan menyamar sebagai penjual lewat `set_config('request.jwt.claims', ...)`).
+Jadi penekanannya ada di dalam Realtime sendiri. Akibatnya toast berbasis `onInsert` tidak akan
+pernah muncul di lingkungan ini.
+
+Karena itu toast dipicu dari dua arah sekaligus, memakai satu himpunan id supaya tidak dobel:
+
+1. `onInsert` realtime — instan, dan yang benar begitu sisi Supabase beres.
+2. Selisih data dari server — papan disegarkan berkala (30 detik, hanya selagi tab terlihat),
+   lalu pesanan `awaiting_approval` yang belum pernah diberitakan dibandingkan.
+
+Tanpa nomor 2, fitur ini tertulis benar tapi tidak akan pernah berbunyi — lebih buruk daripada
+tidak ada. Hapus nomor 2 kalau Realtime sudah menyalurkan INSERT.
+
+**Migrasi 004:** `replica identity full` untuk `orders` dan `order_items` dipasang supaya basis
+data yang berjalan dan berkas migrasi tidak berbeda. Ia bukan penyebab masalah di atas.
+
 - [ ] **Step 6: Verifikasi di peramban**
 
-Dengan papan penjual terbuka di satu tab dan siswa di tab lain, buat pesanan baru. Expected:
-toast muncul tanpa memuat ulang halaman, dan chip penghitungnya bertambah satu.
+Papan penjual dibuka, lalu pesanan baru dibuat dari sisi basis data. Expected: toast muncul
+tanpa memuat ulang halaman, tab penghitungnya bertambah satu, dan menekan "Lihat" memindahkan
+filter ke "Menunggu". Karena INSERT realtime tidak sampai (lihat catatan di atas), kejadian
+yang bisa diverifikasi adalah jalur cadangan: sisipkan baris, tunggu satu tick penyegaran.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/components/ui/Toast.tsx src/components/realtime/RealtimeRefresher.tsx "src/app/(app)/layout.tsx" "src/app/(app)/kantin/page.tsx"
+git add src/components/ui/Toast.tsx src/components/vendor/OrderFeed.tsx src/components/vendor/OrderBoard.tsx src/components/realtime/RealtimeRefresher.tsx "src/app/(app)/layout.tsx" "src/app/(app)/kantin/page.tsx" supabase/migrations/004_realtime_replica_identity.sql supabase/tests/001_schema_probe.sql
 git commit -m "feat(vendor): alert on new orders and count the queue"
 ```
 

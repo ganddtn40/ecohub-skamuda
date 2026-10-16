@@ -253,10 +253,27 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
   );
 }
 
-export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
+/** Filter status papan. `menunggu` sengaja sempit: hanya pesanan yang belum diterima. */
+export type OrderFilter = "aktif" | "menunggu" | "selesai" | "semua";
+
+const STATUS_TABS: Array<{ value: OrderFilter; label: string }> = [
+  { value: "aktif", label: "Aktif" },
+  { value: "menunggu", label: "Menunggu" },
+  { value: "selesai", label: "Selesai" },
+  { value: "semua", label: "Semua" },
+];
+
+export function OrderBoard({
+  orders,
+  status,
+  onStatusChange,
+}: {
+  orders: VendorOrder[];
+  status: OrderFilter;
+  onStatusChange: (status: OrderFilter) => void;
+}) {
   const router = useRouter();
   const [slot, setSlot] = useState<string>("semua");
-  const [status, setStatus] = useState<"aktif" | "selesai" | "semua">("aktif");
 
   const slots = Array.from(new Set(orders.map((order) => order.pickup_time_slot)));
   const activeStatuses: OrderStatus[] = ["awaiting_approval", "processing", "ready_for_pickup"];
@@ -264,6 +281,7 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
   const filtered = orders.filter((order) => {
     if (slot !== "semua" && order.pickup_time_slot !== slot) return false;
     if (status === "aktif") return activeStatuses.includes(order.status);
+    if (status === "menunggu") return order.status === "awaiting_approval";
     if (status === "selesai") return !activeStatuses.includes(order.status);
     return true;
   });
@@ -300,36 +318,45 @@ export function OrderBoard({ orders }: { orders: VendorOrder[] }) {
           })}
         </div>
 
-        <div role="tablist" aria-label="Filter status" className="flex gap-2">
-          {(["aktif", "selesai", "semua"] as const).map((option) => {
-            const active = status === option;
+        <div
+          role="tablist"
+          aria-label="Filter status"
+          className="flex gap-2 overflow-x-auto"
+        >
+          {STATUS_TABS.map((tab) => {
+            const active = status === tab.value;
+            // Jumlah antrean menempel pada tab-nya sendiri. Sebelumnya ada chip
+            // terpisah di atas papan, tapi dua kontrol untuk saringan yang sama
+            // hanya membuat penjual ragu harus menekan yang mana.
+            const count = tab.value === "menunggu" ? waiting : 0;
             return (
               <button
-                key={option}
+                key={tab.value}
                 role="tab"
                 type="button"
                 aria-selected={active}
-                onClick={() => setStatus(option)}
+                onClick={() => onStatusChange(tab.value)}
                 className={cn(
-                  "h-10 rounded-full px-4 text-[15px] font-semibold capitalize transition-colors",
-                  active
-                    ? "bg-eco-50 text-eco-700"
-                    : "bg-white text-ink-soft hover:bg-mint",
+                  "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold transition-colors",
+                  active ? "bg-eco-50 text-eco-700" : "bg-white text-ink-soft hover:bg-mint",
                 )}
               >
-                {option}
+                {tab.label}
+                {count > 0 ? (
+                  <span
+                    className={cn(
+                      "tnum rounded-full px-1.5 text-small",
+                      active ? "bg-eco-600 text-white" : "bg-gold-50 text-gold-600",
+                    )}
+                  >
+                    {count}
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </div>
       </div>
-
-      {waiting > 0 ? (
-        <p className="mt-3 inline-flex h-9 items-center gap-2 rounded-full bg-gold-50 px-3.5 text-small font-semibold text-gold-600">
-          <Clock3 size={14} />
-          Menunggu diterima: <span className="tnum">{waiting}</span>
-        </p>
-      ) : null}
 
       <div className="mt-4">
         {filtered.length === 0 ? (

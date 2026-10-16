@@ -1,6 +1,7 @@
 import { requireProfile } from "@/lib/auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ToastProvider } from "@/components/ui/Toast";
 import { ROLE_LABEL } from "@/lib/constants";
 
 /**
@@ -16,16 +17,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { profile } = await requireProfile();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-mint">
-      <AppHeader
-        role={profile.role}
-        fullName={profile.full_name}
-        roleLabel={ROLE_LABEL[profile.role]}
-      />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-28 pt-5 sm:px-8 md:pb-14">
-        {children}
-      </main>
-      <BottomNav role={profile.role} />
-    </div>
+    <ToastProvider>
+      <div className="flex min-h-dvh flex-col bg-mint">
+        <AppHeader
+          role={profile.role}
+          fullName={profile.full_name}
+          roleLabel={ROLE_LABEL[profile.role]}
+        />
+        <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-28 pt-5 sm:px-8 md:pb-14">
+          {children}
+        </main>
+        <BottomNav role={profile.role} />
+      </div>
+    </ToastProvider>
   );
 }
