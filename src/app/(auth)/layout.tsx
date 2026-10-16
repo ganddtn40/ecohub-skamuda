@@ -45,8 +45,23 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        <main className="page-x mx-auto -mt-7 w-full max-w-lg flex-1 pb-12 md:mx-0 md:mt-0 md:flex md:max-w-none md:flex-col md:justify-center md:px-8 md:pb-10 md:pt-10 lg:px-12">
-          {children}
+        <main className="-mt-7 flex min-h-0 flex-1 flex-col overflow-y-auto md:mt-0">
+          {/* Pemusatan yang aman terhadap luapan. `justify-center` pada kolom
+              flex memotong bagian atas kartu begitu isinya lebih tinggi dari
+              layar, dan potongan itu tidak bisa dijangkau gulir. Auto-margin
+              pada kartunya memberi hasil yang sama saat memang ada ruang
+              kosong, lalu runtuh jadi nol saat tidak ada — dan karena tinggi
+              kolomnya mengikuti isi, halaman yang menggulir, bukan kartunya
+              yang terpotong.
+
+              Tingginya memakai dvh, bukan vh, supaya ikut menyesuaikan bilah
+              peramban HP yang muncul-hilang saat digulir. Keyboard bukan
+              urusan tinggi di sini: yang menjaga tombol kirim tetap terlihat
+              saat sebuah kolom difokuskan adalah `scroll-mb-32` pada kolom
+              isian (lihat `components/ui/Input.tsx`). */}
+          <div className="page-x mx-auto my-auto w-full max-w-lg px-4 py-7 md:max-w-none md:px-8 md:py-10 lg:px-12">
+            {children}
+          </div>
         </main>
 
         <footer

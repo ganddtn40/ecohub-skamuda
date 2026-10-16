@@ -107,6 +107,15 @@ export function LoginForm() {
         </Field>
       </div>
 
+      <div className="mt-2 text-right">
+        <Link
+          href={ROUTE.forgotPassword}
+          className="text-[15px] font-semibold text-eco-700 hover:underline"
+        >
+          Lupa password?
+        </Link>
+      </div>
+
       <Button type="submit" disabled={pending} className="mt-6 w-full">
         {pending ? <Spinner className="text-white" /> : <LogIn size={18} />}
         {pending ? "Memeriksa akun..." : "Masuk"}

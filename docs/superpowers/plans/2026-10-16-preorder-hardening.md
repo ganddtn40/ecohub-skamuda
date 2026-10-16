@@ -965,15 +965,43 @@ Tambahkan jarak gulir bawah pada kolom-kolom form (`scroll-mb`) dan pastikan tid
 `overflow-hidden` pada rantai pembungkus yang menghalangi gulir. `dvh` dipakai, bukan `vh`,
 supaya tinggi ikut menyusut saat keyboard muncul.
 
+**Pelaksanaannya:** jaraknya ditaruh sekali di `CONTROL` pada `src/components/ui/Input.tsx`
+(`scroll-mb-32`), bukan diulang di tiap kolom kedua form. Ketiga kendali — `Input`, `Textarea`,
+`Select` — memakai string kelas yang sama, jadi satu tempat sudah mencakup semuanya, dan
+form lain di aplikasi ini ikut mendapat perilaku yang sama tanpa disengaja-sengaja. Rantai
+pembungkusnya bersih: `overflow-hidden` hanya ada di `.field` (kepala dan kolom foto), bukan
+di jalur kartu form menuju wadah gulir.
+
+Soal `dvh`: perkiraan di atas ternyata terlalu percaya diri. Di iOS, keyboard tidak mengubah
+`dvh` sama sekali — yang menyusut karena keyboard adalah visual viewport, sementara `dvh`
+mengikuti bilah peramban yang muncul-hilang saat digulir. Jadi `dvh` tetap dipakai (itu tetap
+pilihan yang benar untuk tinggi layar HP), tapi bukan itu yang menjaga tombol kirim terlihat.
+Yang benar-benar melakukannya adalah `scroll-mb-32` tadi: saat kolom difokuskan, peramban
+menghitung jarak bawah itu ketika menggulirnya ke dalam pandangan, sehingga tombol kirim di
+bawahnya ikut terbawa naik. Ini diukur, bukan disimpulkan — lihat Step 5.
+
 - [ ] **Step 3: Tambah tautan lupa password**
 
 Di `src/components/auth/LoginForm.tsx`, tepat di bawah kolom kata sandi, tambahkan tautan
 `text-[15px]` "Lupa password?" menuju `ROUTE.forgotPassword` (rutenya dibuat di Task 9).
 
+**Rutenya dikerjakan di sini.** Rencana menyebut `ROUTE.forgotPassword` baru lahir di Task 9,
+tetapi tautan ini tidak bisa lolos `tsc` sebelum rutenya ada. Step 1 Task 9 karena itu
+dipindahkan ke task ini: `forgotPassword`, `resetPassword`, dan keduanya di `PUBLIC_PATHS`.
+Konsekuensinya jujur perlu dicatat — sampai Task 9 mendarat, tautan ini menuju halaman yang
+belum ada dan menghasilkan 404. Jendelanya hanya satu task di cabang fitur ini, dan
+menyatukan kedua task jadi satu commit akan membuat catatan ledger-nya kabur. Step 1 Task 9
+tinggal dicentang setelah dipastikan tidak ada sisa pekerjaan di sana.
+
 - [ ] **Step 4: Terapkan padding yang sama di `RegisterForm`**
 
 Form pendaftaran memakai kartu `rounded-card bg-white p-6 sm:p-8` yang sama; pastikan
 paddingnya konsisten dengan login di layar sempit.
+
+**Ternyata tidak ada yang perlu diubah.** Kedua form sudah memakai `rounded-card bg-white
+p-6 sm:p-8` yang identik, jadi langkah ini nol perubahan di `RegisterForm.tsx`. Yang membuat
+form panjang ini muat di layar pendek adalah rangka `(auth)` di Step 1, bukan paddingnya.
+Diukur pada 320px: kartu 273px di dalam viewport, kolom isian 40–265px, tanpa gulir mendatar.
 
 - [ ] **Step 5: Verifikasi di peramban pada lebar 360px**
 
@@ -981,10 +1009,23 @@ Jalankan `npm run dev`, buka `/login` dan `/register` pada lebar 360px. Expected
 isi yang terpotong di atas, halaman bisa digulir sampai dasar, dan tombol submit terjangkau.
 Uji juga tinggi 560px untuk meniru keyboard terbuka.
 
+**Cara mengukurnya:** alat peramban di sini tidak bisa mengubah ukuran jendela, jadi halamannya
+dirender di dalam `iframe` berukuran tetap dari halaman yang sama; `dvh` dan media query di
+dalam iframe mengikuti kotak iframe, bukan jendela. Ukurannya dibaca langsung dari geometri
+elemen, bukan dari tangkapan layar.
+
+Hasil pada `/login`:
+
+| Ukuran | Yang terukur |
+|---|---|
+| 360x740 | tanpa gulir mendatar; kartu 16–329px; ada jarak 54px di atas dan 53px di bawah kartu (pusatnya benar); tombol kirim berakhir di 533px, terlihat tanpa menggulir; tautan "Lupa password?" di 439–458px, tepat di bawah kolom sandi, `href="/lupa-password"` |
+| 320x420 | tanpa gulir mendatar; kartu 16–289px; kolom email 268–314px (tidak terpotong di atas); tombol kirim 460–508px, terjangkau dengan menggulir; setelah kolom sandi difokuskan halaman menggulir ke 110px dan tombol kirim mendarat di 350–398px — **seluruhnya di dalam layar 420px**, dengan `scroll-margin-bottom: 128px` terbaca di elemennya |
+| 320x420 `/register` | tanpa gulir mendatar; kelima kendali 40–265px; kartu 16–289px; tombol kirim di 814px dari dokumen setinggi 1381px, terjangkau |
+
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "src/app/(auth)/layout.tsx" src/components/auth/LoginForm.tsx src/components/auth/RegisterForm.tsx
+git add "src/app/(auth)/layout.tsx" src/components/auth/LoginForm.tsx src/components/auth/RegisterForm.tsx src/components/ui/Input.tsx src/lib/constants.ts
 git commit -m "fix(auth): centre the form without clipping it on short screens"
 ```
 

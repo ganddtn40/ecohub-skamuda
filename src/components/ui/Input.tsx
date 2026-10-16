@@ -11,7 +11,12 @@ const CONTROL =
   "w-full rounded-control border border-line bg-white px-3 py-2.5 text-[15px] text-ink " +
   "placeholder:text-muted/70 transition-colors " +
   "focus:border-eco-500 focus:outline-none focus:ring-2 focus:ring-eco-500/25 " +
-  "disabled:cursor-not-allowed disabled:bg-mint disabled:text-muted";
+  "disabled:cursor-not-allowed disabled:bg-mint disabled:text-muted " +
+  // Jarak gulir bawah: saat kolom ini difokuskan dan peramban menggulirnya ke
+  // dalam pandangan, sisa ruang di bawahnya ikut diperhitungkan. Di HP, keyboard
+  // memakan sebagian tinggi layar, dan tanpa ini kolom yang difokuskan bisa
+  // mendarat tepat di tepi bawah — tombol kirim di bawahnya lalu tertutup.
+  "scroll-mb-32";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(CONTROL, className)} {...props} />;
