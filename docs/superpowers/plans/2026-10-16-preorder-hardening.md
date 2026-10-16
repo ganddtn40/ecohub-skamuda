@@ -1036,8 +1036,9 @@ git commit -m "fix(auth): centre the form without clipping it on short screens"
 **Files:**
 - Create: `src/components/auth/ForgotPasswordForm.tsx`
 - Create: `src/app/(auth)/lupa-password/page.tsx`
-- Modify: `src/lib/constants.ts`
+- Modify: `src/lib/constants.ts` (sudah dikerjakan di Task 8)
 - Modify: `src/lib/supabase/middleware.ts`
+- Modify: `src/lib/auth-errors.ts` (pesan pembatas laju)
 
 **Interfaces:**
 - Consumes: `(auth)` shell dari Task 8.
@@ -1048,6 +1049,12 @@ git commit -m "fix(auth): centre the form without clipping it on short screens"
 
 Di `src/lib/constants.ts`, tambahkan `forgotPassword` dan `resetPassword` ke `ROUTE`, dan
 keduanya ke `PUBLIC_PATHS`.
+
+**Sudah dikerjakan di Task 8.** Tautan "Lupa password?" di `LoginForm` memakai
+`ROUTE.forgotPassword`, jadi `tsc` tidak akan hijau sebelum rutenya ada. Karena itu langkah
+ini dipindahkan ke task sebelumnya (tercatat di sana). Di task ini tidak ada sisa pekerjaan:
+`ROUTE.forgotPassword`, `ROUTE.resetPassword`, dan kedua entri `PUBLIC_PATHS`-nya sudah ada di
+commit Task 8 dan tidak perlu disentuh lagi.
 
 - [ ] **Step 2: Pastikan `/reset-password` tidak ikut ditendang**
 
@@ -1065,21 +1072,76 @@ Sukses maupun email yang tidak terdaftar menampilkan pesan yang sama persis — 
 itu terdaftar, tautan reset sudah dikirim" — supaya halaman ini tidak bisa dipakai menebak
 email mana yang punya akun.
 
+**Aturan "tidak boleh bisa ditebak" ternyata harus lebih luas dari yang direncanakan.**
+Rencananya hanya menyamakan email terdaftar dengan email tidak terdaftar. Pengukuran di Step 5
+menunjukkan itu belum cukup: untuk akun yang benar-benar ada di proyek ini, layanannya menjawab
+**400 `email_address_invalid`** — dan alasan itu baru muncul setelah akunnya ditemukan. Jadi
+membedakan "berhasil" dari "gagal" pun sudah cukup untuk menebak email mana yang punya akun,
+walaupun kata "tidak terdaftar" tidak pernah ditulis.
+
+Aturan yang dipakai sekarang: **hanya kegagalan yang tidak mungkin bergantung pada
+ada-tidaknya akun yang ditampilkan sebagai gagal** — koneksi putus (`status === 0` dengan
+pesan bergaya jaringan) dan galat server (5xx). Seluruh keluarga 4xx diperlakukan sama seperti
+keberhasilan. Yang termasuk 4xx di sini bukan cuma "tidak ditemukan", tapi juga
+`email_address_invalid` (hanya untuk akun yang ada) dan `over_email_send_rate_limit` (hanya
+tercapai kalau pengirimannya memang dicoba). Alasan panjangnya ditulis sebagai komentar di
+`ForgotPasswordForm.tsx`, supaya orang berikutnya tidak "merapikan" cabang itu jadi pesan error
+dan diam-diam mengembalikan kebocorannya.
+
+Konsekuensi yang disadari: pengguna bisa membaca "periksa emailmu" padahal emailnya tidak
+terkirim. Itu ditutup di sisi salinan, bukan di sisi status — kalimat keduanya berbunyi
+"Tautannya belum datang? Periksa folder spam, lalu coba kirim ulang beberapa menit lagi", yang
+tetap jujur untuk kedua kemungkinan tanpa membocorkan apa pun.
+
 - [ ] **Step 4: Tulis halaman `/lupa-password`**
 
 Judul, satu kalimat penjelas, formnya, dan tautan kembali ke `/login`.
+
+Dikerjakan sebagai `src/app/(auth)/lupa-password/page.tsx` berisi `metadata` berjudul
+"Lupa Kata Sandi" plus `<ForgotPasswordForm />`. Tidak perlu `Suspense` seperti halaman login:
+tidak ada `useSearchParams` di sini, jadi tidak ada yang ditangguhkan. Judulnya ditaruh di
+`metadata`, sedangkan `<h1>`-nya di dalam form — di layar hasil, judulnya jadi satu-satunya
+`h1` bersama kalimat penjelas dan tautan "Masuk di sini".
 
 - [ ] **Step 5: Verifikasi di peramban**
 
 Buka `/lupa-password` tanpa login. Kirim email terdaftar dan email yang tidak ada.
 Expected: pesan sukses identik untuk keduanya, dan tidak ada error mentah yang bocor.
 
+Hasilnya identik sampai ke huruf terakhir pada kedua kasus, dan permintaan ke
+`/auth/v1/recover?redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback%3Fnext%3D%2Freset-password`
+benar-benar terkirim dua kali — terbaca dari catatan jaringan peramban dengan status **429**
+(email terdaftar) lalu **200** (email tidak ada), dua-duanya mendarat di layar yang sama.
+
+**Temuan yang perlu dilaporkan ke pengguna: proyek ini belum bisa mengirim email reset sama
+sekali.** Dua sebab, keduanya di luar kode:
+
+1. **Domain demo tidak ada di DNS.** `skamuda.sch.id` dijawab *Non-existent domain* — tanpa MX
+   maupun A (pembanding: `gmail.com` menjawab normal). Pemeriksa alamat milik layanan auth
+   menolak domain yang gagal diperiksa DNS-nya, dan itu muncul sebagai
+   `email_address_invalid`. Karena seluruh akun demo memakai domain itu, tidak ada satu pun
+   akun demo yang bisa dikirimi tautan reset — dan kemungkinan besar pendaftaran akun baru
+   dengan domain itu pun ikut tertolak. Ini perlu domain sungguhan atau SMTP sendiri; bukan
+   sesuatu yang bisa ditambal dari sisi aplikasi.
+2. **SMTP bawaan Supabase, dengan kuota yang sangat kecil.** Percobaan beruntun langsung
+   dijawab `429 over_email_send_rate_limit`, dan itu hanya terjadi pada akun yang benar-benar
+   ada. SMTP bawaan juga hanya menjangkau alamat tim proyek. Untuk uji email sungguhan
+   (Step Task 10), perlu SMTP sendiri di dashboard Supabase.
+
+Keduanya sengaja **tidak** ditambal di kode: menampilkan pesan khusus untuk
+`email_address_invalid` justru mengembalikan kebocoran yang baru saja ditutup, dan
+menganggapnya "berhasil" adalah satu-satunya pilihan yang tidak membocorkan apa pun.
+
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/auth/ForgotPasswordForm.tsx "src/app/(auth)/lupa-password/page.tsx" src/lib/constants.ts src/lib/supabase/middleware.ts
+git add src/components/auth/ForgotPasswordForm.tsx "src/app/(auth)/lupa-password/page.tsx" src/lib/constants.ts src/lib/supabase/middleware.ts src/lib/auth-errors.ts
 git commit -m "feat(auth): request a password reset without revealing accounts"
 ```
+
+`src/lib/auth-errors.ts` ikut karena pesan pembatas laju "For security purposes, you can only
+request this after N seconds" ditambahkan ke `mapAuthError`. Halaman ini tidak lagi memakainya,
+tetapi halaman masuk dan daftar memakainya, dan keduanya bisa kena batas yang sama.
 
 ---
 

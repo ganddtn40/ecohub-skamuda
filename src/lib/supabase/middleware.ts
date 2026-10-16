@@ -56,6 +56,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Sudah login: cegah membuka halaman auth, arahkan ke dashboard peran.
+  //
+  // Daftarnya sengaja persis dua rute ini. `/lupa-password` tidak ikut karena
+  // siswa yang sudah masuk tetap boleh minta tautan reset. Dan `/reset-password`
+  // justru harus tidak ikut: pengguna yang baru mengeklik tautan reset sedang
+  // memegang sesi recovery yang sah, dan kalau dilempar ke dashboard di sini ia
+  // tidak akan pernah sampai ke halaman ganti sandinya.
   if (pathname === "/login" || pathname === "/register") {
     const { data: profile } = await supabase
       .from("profiles")
