@@ -53,7 +53,7 @@ for (const file of files) {
     output += `${err.message}\n`;
   }
 
-  const lines = output.split(/\r?\n/).filter((l) => /^(LULUS|GAGAL|LEWAT):/.test(l.trim()));
+  const lines = output.split(/\r?\n/).filter((l) => /^(LULUS|GAGAL|LEWAT|INFO):/.test(l.trim()));
   for (const l of lines) console.log(`  ${l.trim()}`);
 
   const gagal = lines.filter((l) => l.trim().startsWith("GAGAL:"));
