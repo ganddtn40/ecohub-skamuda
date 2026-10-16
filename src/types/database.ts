@@ -178,6 +178,9 @@ export interface TicketData {
   status: OrderStatus;
   total_price: number;
   discount_applied: number;
+  payment_mode: OrderPaymentMode;
+  /** Poin yang benar-benar dipotong. Nol untuk pesanan tunai. */
+  points_paid: number;
   notes: string | null;
   stand_name: string | null;
   created_at?: string;

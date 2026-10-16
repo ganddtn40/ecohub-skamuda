@@ -22,8 +22,17 @@ import { Spinner } from "@/components/ui/Spinner";
 import { BookingTicket } from "@/components/student/BookingTicket";
 import { PICKUP_SLOTS, type PickupSlot } from "@/lib/constants";
 import { formatRupiah } from "@/lib/format";
+import { mapOrderError } from "@/lib/order-errors";
+import { evaluatePointsPayment, type PointsPayment } from "@/lib/preorder";
 import { cn } from "@/lib/cn";
-import type { CanteenStand, MenuItem, TicketData, VoucherTier } from "@/types/database";
+import type {
+  CanteenStand,
+  MenuItem,
+  OrderPaymentMode,
+  OrderStatus,
+  TicketData,
+  VoucherTier,
+} from "@/types/database";
 
 interface CartLine {
   qty: number;
@@ -31,6 +40,20 @@ interface CartLine {
 }
 
 type Carts = Record<string, Record<string, CartLine>>;
+
+/**
+ * Kenapa opsi bayar dengan poin tidak bisa dipakai. Tombol yang mati tanpa
+ * penjelasan membuat siswa menebak-nebak; teksnya harus menjawab langsung.
+ */
+function pointsUnavailableReason(result: PointsPayment): string | null {
+  if (result.available) return null;
+  if (result.reason === "menu-tanpa-harga-poin") {
+    return "Ada menu di keranjang ini yang belum punya harga poin.";
+  }
+  return result.cost === null
+    ? "Saldo poinmu belum cukup untuk pesanan ini."
+    : `Saldo poinmu belum cukup. Butuh ${result.cost} P.`;
+}
 
 export function MenuCatalog({
   stands,
@@ -52,6 +75,7 @@ export function MenuCatalog({
   const [slot, setSlot] = useState<PickupSlot>(PICKUP_SLOTS[0]);
   const [orderNotes, setOrderNotes] = useState("");
   const [voucherPoints, setVoucherPoints] = useState(0);
+  const [paymentMode, setPaymentMode] = useState<OrderPaymentMode>("cash");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<TicketData | null>(null);
@@ -102,9 +126,26 @@ export function MenuCatalog({
   const itemCount = cartLines.reduce((sum, line) => sum + line.qty, 0);
   const subtotal = cartLines.reduce((sum, line) => sum + line.item.price_idr * line.qty, 0);
 
+  const pointsPayment = useMemo(
+    () =>
+      evaluatePointsPayment(
+        cartLines.map((line) => ({ points_price: line.item.points_price, qty: line.qty })),
+        pointsBalance,
+      ),
+    [cartLines, pointsBalance],
+  );
+
+  // Mode poin hanya berlaku kalau keranjangnya memang memenuhi syarat. Kalau
+  // syaratnya hilang di tengah jalan (misalnya item terakhir dihapus), pilihan
+  // jatuh kembali ke tunai alih-alih mengirim mode yang pasti ditolak RPC.
+  const pointsCost = pointsPayment.available ? pointsPayment.cost : null;
+  const payingWithPoints = paymentMode === "points" && pointsCost !== null;
+  const pointsToPay = payingWithPoints && pointsCost !== null ? pointsCost : 0;
+
   const activeTier = tiers.find((tier) => tier.points_cost === voucherPoints);
   const discount = activeTier ? Math.min(activeTier.discount_idr, subtotal) : 0;
-  const net = Math.max(subtotal - discount, 0);
+  const cashDue = Math.max(subtotal - discount, 0);
+  const net = payingWithPoints ? 0 : cashDue;
 
   const currentStand = stands.find((stand) => stand.id === standId) ?? null;
 
@@ -134,6 +175,7 @@ export function MenuCatalog({
     setCarts((prev) => ({ ...prev, [standId]: {} }));
     setOrderNotes("");
     setVoucherPoints(0);
+    setPaymentMode("cash");
   }
 
   async function submitOrder() {
@@ -151,23 +193,37 @@ export function MenuCatalog({
         quantity: line.qty,
         item_notes: line.notes,
       })),
-      p_voucher_points: voucherPoints,
+      p_voucher_points: payingWithPoints ? 0 : voucherPoints,
+      p_payment_mode: payingWithPoints ? "points" : "cash",
     });
 
     if (rpcError) {
-      setError(rpcError.message);
+      setError(mapOrderError(rpcError));
       setPending(false);
       return;
     }
 
-    const result = data as { booking_code: string };
+    // Angka tiket diambil dari nilai balikan RPC, bukan dihitung ulang di sini.
+    // Basis data yang menentukan potongan akhir, status awal, dan poin yang
+    // terpotong; menghitungnya lagi di klien hanya membuka peluang tiket dan isi
+    // tabel berbeda.
+    const result = data as {
+      booking_code: string;
+      subtotal: number;
+      discount: number;
+      status: OrderStatus;
+      payment_mode: OrderPaymentMode;
+      points_paid: number;
+    };
 
     setTicket({
       booking_code: result.booking_code,
       pickup_time_slot: slot,
-      status: "pending",
-      total_price: subtotal,
-      discount_applied: discount,
+      status: result.status,
+      total_price: result.subtotal,
+      discount_applied: result.discount,
+      payment_mode: result.payment_mode,
+      points_paid: result.points_paid,
       notes: orderNotes.trim() ? orderNotes.trim() : null,
       stand_name: currentStand.stand_name,
       items: cartLines.map((line) => ({
@@ -376,7 +432,9 @@ export function MenuCatalog({
               ) : null}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-small text-muted">Total dibayar di kantin</p>
+                  <p className="text-small text-muted">
+                    {payingWithPoints ? "Sisa dibayar di kantin" : "Total dibayar di kantin"}
+                  </p>
                   <p className="tnum text-[17px] font-bold text-ink">{formatRupiah(net)}</p>
                 </div>
                 <Button
@@ -486,60 +544,108 @@ export function MenuCatalog({
               />
             </Field>
 
-            {/* Tukar poin */}
+            {/* Cara bayar */}
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-semibold text-ink-soft">Tukar poin</span>
+                <span className="text-[15px] font-semibold text-ink-soft">Cara bayar</span>
                 <Badge tone="amber">{pointsBalance} P tersedia</Badge>
               </div>
               <div className="mt-2 space-y-2">
                 <button
                   type="button"
-                  aria-pressed={voucherPoints === 0}
-                  onClick={() => setVoucherPoints(0)}
+                  aria-pressed={!payingWithPoints}
+                  onClick={() => setPaymentMode("cash")}
                   className={cn(
                     "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
-                    voucherPoints === 0
-                      ? "border-eco-600 bg-eco-50"
-                      : "bg-white hover:bg-mint",
+                    !payingWithPoints ? "border-eco-600 bg-eco-50" : "bg-white hover:bg-mint",
                   )}
                 >
-                  <span className="font-semibold text-ink">Tanpa tukar poin</span>
-                  <span className="text-muted">Rp0</span>
+                  <span className="font-semibold text-ink">Bayar tunai di kantin</span>
+                  <span className="tnum text-muted">{formatRupiah(cashDue)}</span>
                 </button>
 
-                {tiers.map((tier) => {
-                  const enough = pointsBalance >= tier.points_cost;
-                  const active = voucherPoints === tier.points_cost;
-                  return (
-                    <button
-                      key={tier.points_cost}
-                      type="button"
-                      disabled={!enough}
-                      aria-pressed={active}
-                      onClick={() => setVoucherPoints(tier.points_cost)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
-                        active
-                          ? "border-eco-600 bg-eco-50"
-                          : "bg-white hover:bg-mint",
-                        !enough && "cursor-not-allowed opacity-50 hover:bg-white",
-                      )}
-                    >
-                      <span className="font-semibold text-ink">
-                        {tier.label} &middot; {tier.points_cost} P
-                      </span>
-                      <span className="text-muted">
-                        -{formatRupiah(tier.discount_idr)}
-                      </span>
-                    </button>
-                  );
-                })}
+                {pointsPayment.available ? (
+                  <button
+                    type="button"
+                    aria-pressed={payingWithPoints}
+                    onClick={() => {
+                      setPaymentMode("points");
+                      // Tukar poin tidak berlaku saat melunasi penuh dengan poin:
+                      // dua-duanya memotong saldo yang sama.
+                      setVoucherPoints(0);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
+                      payingWithPoints ? "border-eco-600 bg-eco-50" : "bg-white hover:bg-mint",
+                    )}
+                  >
+                    <span className="font-semibold text-ink">Bayar penuh dengan poin</span>
+                    <span className="tnum text-muted">{pointsPayment.cost} P</span>
+                  </button>
+                ) : (
+                  <div className="rounded-control bg-mint px-3.5 py-2.5">
+                    <p className="text-[15px] font-semibold text-muted">Bayar penuh dengan poin</p>
+                    <p className="mt-0.5 text-small text-muted">
+                      {pointsUnavailableReason(pointsPayment)}
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className="mt-1.5 text-small text-muted">
-                Poin dipotong otomatis setelah pesanan dibuat.
-              </p>
             </div>
+
+            {/* Tukar poin */}
+            {!payingWithPoints ? (
+              <div>
+                <span className="mb-2 block text-[15px] font-semibold text-ink-soft">Tukar poin</span>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    aria-pressed={voucherPoints === 0}
+                    onClick={() => setVoucherPoints(0)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
+                      voucherPoints === 0
+                        ? "border-eco-600 bg-eco-50"
+                        : "bg-white hover:bg-mint",
+                    )}
+                  >
+                    <span className="font-semibold text-ink">Tanpa tukar poin</span>
+                    <span className="text-muted">Rp0</span>
+                  </button>
+
+                  {tiers.map((tier) => {
+                    const enough = pointsBalance >= tier.points_cost;
+                    const active = voucherPoints === tier.points_cost;
+                    return (
+                      <button
+                        key={tier.points_cost}
+                        type="button"
+                        disabled={!enough}
+                        aria-pressed={active}
+                        onClick={() => setVoucherPoints(tier.points_cost)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-control px-3.5 py-2.5 text-[15px] transition-colors",
+                          active
+                            ? "border-eco-600 bg-eco-50"
+                            : "bg-white hover:bg-mint",
+                          !enough && "cursor-not-allowed opacity-50 hover:bg-white",
+                        )}
+                      >
+                        <span className="font-semibold text-ink">
+                          {tier.label} &middot; {tier.points_cost} P
+                        </span>
+                        <span className="text-muted">
+                          -{formatRupiah(tier.discount_idr)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-small text-muted">
+                  Poin dipotong otomatis setelah pesanan dibuat.
+                </p>
+              </div>
+            ) : null}
 
             {/* Ringkasan */}
             <dl className="space-y-1.5 pt-3 text-[15px]">
@@ -547,7 +653,12 @@ export function MenuCatalog({
                 <dt>Subtotal</dt>
                 <dd className="tnum">{formatRupiah(subtotal)}</dd>
               </div>
-              {discount > 0 ? (
+              {payingWithPoints ? (
+                <div className="flex justify-between text-eco-700">
+                  <dt>Dibayar dengan poin</dt>
+                  <dd className="tnum">-{pointsToPay} P</dd>
+                </div>
+              ) : discount > 0 ? (
                 <div className="flex justify-between text-eco-700">
                   <dt>Potongan poin</dt>
                   <dd className="tnum">-{formatRupiah(discount)}</dd>

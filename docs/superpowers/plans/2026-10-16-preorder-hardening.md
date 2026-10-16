@@ -715,6 +715,8 @@ git commit -m "feat(vendor): alert on new orders and count the queue"
 - Modify: `src/components/student/BookingTicket.tsx`
 - Modify: `src/app/(app)/siswa/pesanan/page.tsx`
 - Modify: `src/components/vendor/BookingVerifier.tsx`
+- Modify: `src/types/database.ts`
+- Modify: `tsconfig.json`
 
 **Koreksi saat pengerjaan (Task 4):** dua berkas terakhir ikut tersentuh di task ini. Begitu
 `TicketData.payment_mode` dan `points_paid` menjadi wajib di Task 2, setiap tempat yang
@@ -722,6 +724,13 @@ menyusun `TicketData` harus mengisinya — dan ada empat tempat, bukan dua: `Men
 `BookingTicket.tsx`, `app/(app)/siswa/pesanan/page.tsx`, dan `components/vendor/BookingVerifier.tsx`.
 `tsc` baru akan menangkapnya saat field-nya benar-benar dipakai, jadi keempatnya dikerjakan
 bersamaan di sini.
+
+**Koreksi saat pengerjaan (Task 6):** `TicketData` sendiri baru menerima `payment_mode` dan
+`points_paid` di task ini, bukan di Task 2 seperti yang tertulis di bawah. Keduanya ditambahkan
+lebih dulu, lalu `tsc` dipakai untuk menemukan keempat penyusunnya — cara itu lebih dapat
+dipercaya daripada menebak daftarnya. `tsconfig.json` juga bertambah
+`allowImportingTsExtensions` supaya impor `../src/lib/preorder.ts` di dalam skrip Node tidak
+ditolak `tsc`; tanpa itu pemeriksa tipe menolak berkas yang justru bisa dijalankan Node.
 
 **Interfaces:**
 - Consumes: `TicketData` dan `OrderPaymentMode` dari Task 2; `place_order` v2 dari Task 3;
@@ -769,6 +778,19 @@ alasannya. Saat opsi poin tidak tersedia, tampilkan alasannya sebagai teks 13px,
 mati tanpa keterangan. Memilih poin menyembunyikan tier voucher dan mengubah ringkasan
 menjadi Subtotal, "Dibayar dengan poin −<cost> P", "Sisa tunai Rp0".
 
+**Dua penyesuaian saat pengerjaan, keduanya soal kejelasan:** badge "n P tersedia" pindah dari
+kepala blok "Tukar poin" ke kepala blok "Cara bayar". Saldo poin adalah bahan pertimbangan saat
+memilih cara bayar, dan blok "Tukar poin" ikut tersembunyi saat mode poin dipilih — badge yang
+ikut hilang bersama pilihannya tidak berguna. Pilihan poin yang tidak bisa dipakai dirender
+sebagai blok `bg-mint` statis, bukan tombol `disabled`: tombol mati mengundang klik dan
+menyisakan tebak-tebakan, sedangkan blok statis dengan kalimat alasannya menjawab langsung.
+
+Satu perilaku yang perlu dicatat karena mudah disalahpahami sebagai bug: pilihan mode disimpan
+apa adanya, sedangkan keabsahannya diturunkan setiap render (`payingWithPoints = mode === "points"
+&& cost !== null`). Jadi kalau keranjang berubah jadi tidak memenuhi syarat, tampilannya kembali
+ke tunai dengan sendirinya, dan begitu keranjangnya memenuhi syarat lagi pilihan poin siswa
+berlaku kembali. Tidak ada pengiriman mode yang tidak sah ke RPC.
+
 - [ ] **Step 6: Kirim mode bayar dan pakai nilai balikan RPC**
 
 `submitOrder` mengirim `p_payment_mode`. Pesan errornya lewat `mapOrderError`. Tiket lokal
@@ -789,10 +811,18 @@ Masuk sebagai `siswa.demo@skamuda.sch.id`. Uji tiga hal: keranjang yang memenuhi
 dibayar poin dan ringkasannya menunjukkan Rp0; keranjang mahal menonaktifkan opsi poin sambil
 menyebut alasannya; dan pesanan tunai dengan voucher tetap berperilaku seperti sebelumnya.
 
+Hasil yang terlihat (saldo siswa disuntik 2.000 P dulu, lalu dikembalikan ke 0):
+
+| Uji | Yang terlihat | Yang tersimpan |
+|---|---|---|
+| Nasi Telur Balado (1.000 P) | tiket "Sudah dibayar dengan poin −1000 P" dan "Sisa dibayar di kantin Rp0" | `payment_mode=points`, `points_paid=1000`, `total_price=10000`, `discount_applied=10000`, tanpa baris voucher |
+| ditambah Mie Goreng Spesial (2.200 P) | opsi poin jadi blok statis "Saldo poinmu belum cukup. Butuh 2200 P." dan pilihan kembali ke tunai; setelah item dihapus, pilihan poin berlaku lagi | tidak ada pesanan terkirim |
+| Tahu Tempe Penyet + tier Hemat | ringkasan "Potongan poin −Rp5.000", "Total dibayar di kantin Rp3.000" | `payment_mode=cash`, `points_paid=500`, `discount_applied=5000`, satu baris voucher |
+
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/lib/preorder.ts scripts/check-preorder-rules.ts src/components/student/MenuCatalog.tsx src/components/student/BookingTicket.tsx
+git add src/lib/preorder.ts scripts/check-preorder-rules.ts src/components/student/MenuCatalog.tsx src/components/student/BookingTicket.tsx "src/app/(app)/siswa/pesanan/page.tsx" src/components/vendor/BookingVerifier.tsx src/types/database.ts tsconfig.json
 git commit -m "feat(student): pay for an order with points and trust the RPC totals"
 ```
 

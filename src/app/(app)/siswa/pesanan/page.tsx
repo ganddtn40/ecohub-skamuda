@@ -4,7 +4,7 @@ import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { StudentOrderList, type StudentOrder } from "@/components/student/StudentOrderList";
 import { unwrap } from "@/lib/query";
-import type { OrderStatus } from "@/types/database";
+import type { OrderPaymentMode, OrderStatus } from "@/types/database";
 
 export const metadata = { title: "Pesanan Saya" };
 export const revalidate = 0;
@@ -23,6 +23,8 @@ interface RawOrder {
   pickup_time_slot: string;
   total_price: number;
   discount_applied: number;
+  payment_mode: OrderPaymentMode;
+  points_paid: number;
   notes: string | null;
   created_at: string;
   canteen_stands: { stand_name: string } | null;
@@ -37,7 +39,7 @@ export default async function StudentOrdersPage() {
     await supabase
       .from("orders")
       .select(
-        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
+        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, payment_mode, points_paid, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
       )
       .eq("student_id", profile.id)
       .order("created_at", { ascending: false })
@@ -51,6 +53,8 @@ export default async function StudentOrdersPage() {
     status: order.status,
     total_price: order.total_price,
     discount_applied: order.discount_applied,
+    payment_mode: order.payment_mode,
+    points_paid: order.points_paid,
     notes: order.notes,
     stand_name: order.canteen_stands?.stand_name ?? null,
     created_at: order.created_at,

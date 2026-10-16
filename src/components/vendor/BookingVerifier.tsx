@@ -11,7 +11,7 @@ import { BookingTicket } from "@/components/student/BookingTicket";
 import { QrCamera } from "@/components/qr/QrCamera";
 import { ORDER_STATUS_META } from "@/lib/constants";
 import { mapOrderError } from "@/lib/order-errors";
-import type { OrderStatus, TicketData } from "@/types/database";
+import type { OrderPaymentMode, OrderStatus, TicketData } from "@/types/database";
 
 interface VerifiedOrder extends TicketData {
   id: string;
@@ -40,6 +40,8 @@ interface RawOrder {
   pickup_time_slot: string;
   total_price: number;
   discount_applied: number;
+  payment_mode: OrderPaymentMode;
+  points_paid: number;
   notes: string | null;
   created_at: string;
   canteen_stands: { stand_name: string } | null;
@@ -76,7 +78,7 @@ export function BookingVerifier() {
     const { data, error: queryError } = await supabase
       .from("orders")
       .select(
-        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
+        "id, booking_code, status, pickup_time_slot, total_price, discount_applied, payment_mode, points_paid, notes, created_at, canteen_stands(stand_name), order_items(quantity, unit_price, item_notes, menu_items(name))",
       )
       .eq("booking_code", clean)
       .maybeSingle();
@@ -101,6 +103,8 @@ export function BookingVerifier() {
       pickup_time_slot: orderRow.pickup_time_slot,
       total_price: orderRow.total_price,
       discount_applied: orderRow.discount_applied,
+      payment_mode: orderRow.payment_mode,
+      points_paid: orderRow.points_paid,
       notes: orderRow.notes,
       stand_name: orderRow.canteen_stands?.stand_name ?? null,
       created_at: orderRow.created_at,

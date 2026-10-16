@@ -11,6 +11,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Skrip di scripts/ dijalankan Node apa adanya dengan penghapusan tipe, dan
+    // Node tidak mengenal alias maupun resolusi tanpa ekstensi. Jadi impornya
+    // menuliskan `.ts` secara eksplisit, dan itu perlu diizinkan di sini.
+    "allowImportingTsExtensions": true,
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],

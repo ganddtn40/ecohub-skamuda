@@ -105,14 +105,19 @@ export function BookingTicket({ ticket }: { ticket: TicketData }) {
           <dt>Subtotal</dt>
           <dd className="tnum">{formatRupiah(ticket.total_price)}</dd>
         </div>
-        {ticket.discount_applied > 0 ? (
+        {ticket.payment_mode === "points" ? (
+          <div className="flex justify-between text-eco-700">
+            <dt>Sudah dibayar dengan poin</dt>
+            <dd className="tnum">-{ticket.points_paid} P</dd>
+          </div>
+        ) : ticket.discount_applied > 0 ? (
           <div className="flex justify-between text-eco-700">
             <dt>Potongan poin</dt>
             <dd className="tnum">-{formatRupiah(ticket.discount_applied)}</dd>
           </div>
         ) : null}
         <div className="flex justify-between pt-2 text-[17px] font-bold text-ink">
-          <dt>Dibayar di kantin</dt>
+          <dt>{ticket.payment_mode === "points" ? "Sisa dibayar di kantin" : "Dibayar di kantin"}</dt>
           <dd className="tnum">{formatRupiah(net)}</dd>
         </div>
       </dl>
