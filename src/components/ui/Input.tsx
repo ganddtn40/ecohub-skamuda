@@ -7,8 +7,22 @@ import type {
 } from "react";
 import { cn } from "@/lib/cn";
 
+/**
+ * 16px pada kolom isian bukan pilihan selera, dan bukan angka yang boleh
+ * diturunkan.
+ *
+ * iOS Safari memperbesar seluruh halaman begitu sebuah kolom difokuskan kalau
+ * ukuran hurufnya di bawah 16px, dan halaman yang sudah terlanjur diperbesar
+ * tidak kembali sendiri: satu ketukan pada kolom email membuat formulir
+ * terlihat berantakan di HP dan pengguna harus mencubit layar untuk keluar.
+ *
+ * Karena itu ukurannya sengaja **tidak** dibedakan per lebar layar. Umpan
+ * `sm:text-[15px]` terlihat rapi di portrait tetapi membuka kembali lubang yang
+ * sama di iPhone mendatar, yang lebarnya di atas `sm`. Yang menentukan di sini
+ * peramban dan perangkatnya, bukan lebar jendela.
+ */
 const CONTROL =
-  "w-full rounded-control border border-line bg-white px-3 py-2.5 text-[15px] text-ink " +
+  "w-full rounded-control border border-line bg-white px-3 py-2.5 text-[16px] text-ink " +
   "placeholder:text-muted/70 transition-colors " +
   "focus:border-eco-500 focus:outline-none focus:ring-2 focus:ring-eco-500/25 " +
   "disabled:cursor-not-allowed disabled:bg-mint disabled:text-muted " +
