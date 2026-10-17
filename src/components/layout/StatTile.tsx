@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 type Tone = "green" | "amber" | "neutral";
@@ -25,17 +25,20 @@ export function StatTile({
   hint,
   tone = "green",
   className,
+  style,
 }: {
   icon: ReactNode;
   label: string;
-  value: string;
+  /** Angka yang sudah diformat. Boleh simpul juga, untuk angka yang berjalan. */
+  value: ReactNode;
   unit?: string;
   hint?: string;
   tone?: Tone;
   className?: string;
+  style?: CSSProperties;
 }) {
   return (
-    <div className={cn("min-w-0", className)}>
+    <div className={cn("min-w-0", className)} style={style}>
       <p className="flex items-baseline gap-1.5">
         <span className="tnum text-[26px] font-bold leading-none text-ink">{value}</span>
         {unit ? <span className="text-small font-semibold text-muted">{unit}</span> : null}

@@ -1523,6 +1523,9 @@ git commit -m "feat(motion): respect reduced motion and add press feedback"
 - Modify: `src/components/vendor/OrderBoard.tsx`
 - Modify: `src/components/student/StudentOrderList.tsx`
 - Create: `src/lib/use-count-up.ts`
+- Create: `src/components/ui/CountUp.tsx`
+- Modify: `src/components/layout/StatTile.tsx`
+- Modify: `src/lib/constants.ts`
 
 **Interfaces:**
 - Consumes: `MotionConfig` dan framer-motion dari Task 11; `ORDER_STATUS_META` dari Task 2.
@@ -1535,9 +1538,30 @@ git commit -m "feat(motion): respect reduced motion and add press feedback"
 Di `tailwind.config.ts` tambahkan keyframe dan animation `shimmer` (gradien bergerak). Karena
 ini mengubah `theme.extend`, **restart server dev** sebelum memeriksa hasilnya.
 
+Keyframe-nya memakai `transform`, dari `translateX(-100%)` ke `translateX(100%)`, bukan
+`background-position`. Sapuan `background-position` memicu cat ulang tiap frame; `transform`
+hanya komposit. Untuk enam baris kerangka memang tidak terasa, tetapi kebiasaannya yang penting:
+gerak yang bisa dikomposit jangan dipindahkan ke cat.
+
+Denyutnya juga ditambahkan sekalian: keyframe `pulse-dot` untuk Step 6, supaya `tailwind.config.ts`
+cukup diubah sekali dan server dev cukup di-restart sekali.
+
 - [ ] **Step 2: Pakai shimmer di `Skeleton`**
 
 Ganti denyut biasa dengan sapuan shimmer. Tetap inert saat `prefers-reduced-motion: reduce`.
+
+**Bentuknya pita di dalam bidang, bukan latar bergerak.** `Skeleton` sekarang satu bidang
+`bg-mint-deep` dengan `overflow-hidden`, berisi satu `<span>` yang memenuhi bidang itu dengan
+gradien lembut (`from-transparent via-white/60 to-transparent`) dan `motion-safe:animate-shimmer`.
+Gradien di sini bukan hiasan bab seperti yang dilarang di `DESIGN.md`: ia satu-satunya cara
+membuat tepi sapuan yang tidak berupa garis keras. Karena itu ia diberi komentar sendiri di
+`Skeleton.tsx`, bukan diselundupkan.
+
+**Yang membuatnya inert saat reduced motion bukan cuma `motion-safe:`.** Pita itu punya kelas
+dasar `-translate-x-full`, jadi kalau animasinya tidak pernah berjalan ia berdiri sepenuhnya di
+luar bidang dan tidak terlihat sama sekali. Tanpa kelas itu, saat animasi dimatikan pita akan
+berhenti di tengah bidang dan yang muncul justru gradien statis yang aneh. Dua pengaman untuk
+satu hal, tetapi keduanya murah dan keduanya terbaca dari kelasnya.
 
 - [ ] **Step 3: Masuk bertahap untuk daftar menu dan kartu statistik**
 
@@ -1546,16 +1570,70 @@ dengan framer-motion. **Jangan** memberi framer-motion pada elemen yang sudah me
 yang scroll-driven — satu elemen tidak boleh punya dua animasi. `.reveal` tetap milik bagian
 publik yang jauh di bawah garis lipatan.
 
+**Dipakai CSS, bukan framer-motion — dan justru untuk menghormati aturan di paragraf atas.**
+Aturan "satu elemen tidak boleh punya dua animasi" berlaku dua arah: menambahkan framer-motion
+pada kartu yang sudah memakai `animate-fade-up` juga berarti dua mesin di satu elemen. Karena
+seluruh animasi masuk di aplikasi ini sudah CSS, yang ditambahkan juga CSS: kelas
+`motion-safe:animate-fade-up` plus `animationDelay` bertingkat.
+
+Tiga keuntungan yang bisa diperiksa, bukan diklaim:
+
+1. Tidak ada elemen pembungkus baru. Grid kartu statistik tetap tiga anak langsung; kalau
+   dibungkus `motion.div`, yang menjadi anak grid adalah pembungkusnya, dan `sm:col-span-1`
+   pada kartu ketiga berpindah tempat.
+2. Dashboard siswa tetap server component. Yang hidup di klien hanya angkanya (Step 5).
+3. Animasi masuk CSS berjalan **sekali per elemen** dengan sendirinya.
+
+**"Sekali saja" diwujudkan dengan penanda `sambutanSelesai`.** Berpindah stand mengganti isi
+daftar menu, dan tanpa penanda itu setiap perpindahan mengulang animasi masuknya dari awal —
+terasa seperti halaman yang memuat ulang, padahal cuma berganti pilihan. Penandanya menyala
+setelah 900 ms (cukup untuk sapuan terpanjang: `min(index, 6) × 55 ms` + 360 ms durasi), lalu
+kartu-kartu berikutnya muncul langsung.
+
+**`motion-safe:` di sini bukan hiasan.** Aturan reduce di `globals.css` hanya memangkas
+`animation-duration` dan `transition-duration`; `animation-delay` tidak disentuh. Tanpa
+`motion-safe:`, pengguna yang meminta gerak minimal tetap akan melihat kartu muncul satu per satu
+dengan jeda — gerak yang tersisa justru pada hal yang paling terlihat.
+
 - [ ] **Step 4: Tulis `useCountUp`**
 
 Hook kecil di atas `animate()` dari framer-motion yang mengembalikan angka menuju nilai
 target. Saat reduced motion aktif, langsung kembalikan nilai target tanpa animasi.
+
+**Ditulis tangan dengan `requestAnimationFrame`, dan alasannya angka.** Versi pertama memang di
+atas `animate()` dari framer-motion seperti yang tertulis di atas, dan hasil ukurannya membuat
+keputusan itu gugur: mengimpor framer-motion lewat hook ini menaikkan First Load JS `/siswa` dari
+175 kB menjadi **201 kB**. Dua puluh enam kilobyte untuk satu angka yang bergerak, di halaman
+pertama yang dibuka hampir setiap siswa, bukan pertukaran yang bisa dibela — apalagi framer-motion
+tetap dipakai di tempat yang memang tidak bisa ditiru CSS, yaitu animasi keluar pada Sheet,
+ConfirmDialog, dan Toast. Setelah ditulis tangan, `/siswa` kembali ke 175 kB.
+
+Yang tetap sama dengan rencana: saat reduced motion aktif, nilai target langsung dipakai. Yang
+berubah hanya alatnya. Pelonggarannya `1 - (1 - t)^5`, padanan dekat `cubic-bezier(0.22, 1, 0.36,
+1)`, ditulis sebagai fungsi karena menghitung bezier di JavaScript berarti menyelesaikan
+persamaannya tiap frame tanpa ada mata yang bisa membedakan hasilnya.
+
+**Nilai pertama dirender apa adanya, bukan dari nol.** Kalau animasinya dimulai dari nol, HTML
+dari server — yang sudah memuat angka benar — akan berubah menjadi "0" saat hidrasi, dan angka
+itulah yang terbaca pembaca layar. Jadi animasinya hanya terjadi ketika nilainya **berubah**,
+yaitu saat petugas mengkredit poin; pada render pertama hook ini memang tidak melakukan apa-apa.
 
 - [ ] **Step 5: Pakai count-up pada saldo poin**
 
 Di dashboard siswa, angka saldo naik dari nilai lama ke nilai baru ketika poin baru
 dikreditkan petugas. Nilainya harus tetap terbaca benar oleh pembaca layar: teks akhirnya
 adalah angka sungguhan, bukan potongan animasi.
+
+**Yang hidup di klien hanya angkanya, bukan kartunya.** `StatTile` tetap dirender server; yang
+berubah hanya tipe `value` menjadi `ReactNode` dan tambahan prop `style` (untuk jeda bertahap di
+Step 3). Lalu `src/components/ui/CountUp.tsx` — satu komponen klien kecil yang memanggil
+`useCountUp` dan memformat hasilnya — dipakai sebagai `value` pada dua kartu statistik. Jadi yang
+dikirim ke peramban hanya satu angka yang bergerak; label, ikon, dan tata letaknya tidak ikut
+menyeberang hanya demi satu animasi.
+
+Aman untuk pembaca layar karena alasan yang sudah dijelaskan di Step 4: HTML dari server memuat
+angka sungguhan, dan hook-nya tidak mengubah apa pun pada render pertama. Yang bergerak hanya
+perubahan berikutnya.
 
 - [ ] **Step 6: Tambah pulse pada badge status**
 
@@ -1565,11 +1643,93 @@ untuk status `processing` dan `ready_for_pickup`. Pulse hanya pada **titik kecil
 badge, bukan seluruh badge: badge yang berdenyut penuh bersama teksnya sulit dibaca. Lembut,
 lambat, dan berhenti untuk reduced-motion.
 
+Dua penyesuaian pada langkah ini:
+
+1. **Daftar statusnya ditaruh di `src/lib/constants.ts`** sebagai `IN_PROGRESS_ORDER_STATUSES`,
+   bukan ditulis dua kali sebagai kondisi di dalam kedua komponen. Alasannya sama dengan alasan
+   `ACTIVE_ORDER_STATUSES` dibuat di Task 7: dua daftar yang ditulis terpisah pasti akan berbeda
+   pendapat suatu hari, dan saat itu terjadi, penanda yang salah akan terlihat seperti kerusakan
+   acak. Titiknya sendiri memakai `bg-current`, jadi ia selalu sewarna teks badge-nya tanpa perlu
+   daftar warna kedua per tone.
+2. **Dua badge sengaja tidak diberi pulse.** Badge di `PreorderGate` menjelaskan kenapa siswa
+   tidak bisa memesan — ia keterangan, bukan penunjuk kemajuan. Badge di `BookingTicket` muncul
+   saat tiket baru dibuka, dan statusnya `awaiting_approval`, yang memang bukan status berjalan.
+   Yang berdenyut hanya tempat orang sedang menunggu sesuatu berubah.
+
 - [ ] **Step 7: Verifikasi**
 
 `npx tsc --noEmit` keluar 0, `npm run build` berhasil, dan di peramban daftar menu masuk
 bertahap sekali saja (bukan dua kali beruntun), shimmer halus, dan angka saldo berakhir tepat
 di nilai sebenarnya.
+
+**Yang sudah terbukti.** `bash scripts/check-types` keluar 0 (`tsc: 0 error`) dan `npm run build`
+berhasil. Biaya bundelnya:
+
+| Rute | Task 11 | Task 12 | Selisih |
+|---|---|---|---|
+| `/siswa` | 175 kB | 175 kB | **0** |
+| `/login` | 178 kB | 178 kB | 0 |
+| `/siswa/kantin` | 232 kB | 233 kB | +1 |
+| `/siswa/pesanan` | 229 kB | 229 kB | 0 |
+| `/kantin`, `/kantin/menu` | 220, 218 kB | 220, 218 kB | 0 |
+| bersama semua rute | 103 kB | 103 kB | 0 |
+
+`/siswa` nol karena count-up-nya ditulis tangan; itulah angka yang membuat Step 4 dibelokkan.
+
+CSS yang benar-benar dikirim diperiksa dari `.next/static/css/`: `@keyframes shimmer`,
+`@keyframes pulse-dot`, `.motion-safe\:animate-shimmer`, dan `.motion-safe\:animate-pulse-dot`
+semuanya ada, dan keempatnya berada **di dalam** blok `@media (prefers-reduced-motion:
+no-preference)` — bukan sekadar ada di kode sumber. Kelas dasar `-translate-x-full` juga ada,
+yang berarti pita shimmer berdiri di luar bidang saat animasinya mati.
+
+Satu jebakan yang sempat menyesatkan dan layak dicatat: pemeriksaan pertama melaporkan
+"0 blok no-preference" dan menyimpulkan semua kelas `motion-safe:` berada di luar gerbangnya.
+Penyebabnya sepele — CSS yang sudah diminifikasi menulis `prefers-reduced-motion:no-preference`
+tanpa spasi setelah titik dua, sementara pencarinya memakai bentuk berspasi. Yang benar adalah
+bentuk tanpa spasi. Ini juga alasan pemeriksaan CSSOM di Step 5 Task 11 lebih dipercaya: CSSOM
+mengembalikan bentuk yang sudah dinormalkan peramban, jadi tidak bergantung pada bentuk teks.
+
+**Yang belum bisa diverifikasi, dan sebabnya tunggal.** Di tengah pengerjaan, tab peramban
+berhenti dikomposit: `requestAnimationFrame` tidak pernah dipanggil sama sekali dan tangkapan
+layar gagal dengan "Screenshot needs a visible tab". Tanpa frame, tidak ada yang bisa diamati
+bergerak — animasi CSS maupun `requestAnimationFrame`. Jadi tiga hal yang tinggal di Step 7 ini
+belum punya bukti perilaku: daftar menu masuk bertahap sekali saja, kehalusan shimmer, dan angka
+saldo berakhir di nilai sebenarnya. Count-up juga termasuk: hook-nya berjalan di atas
+`requestAnimationFrame`, jadi di tab tanpa frame ia akan tampak diam di nilai lama — dan itu akan
+terbaca sebagai kerusakan kalau diperiksa sekarang.
+
+**Yang tetap bisa dibuktikan tanpa frame, dan sudah dibuktikan: angka pertama yang dirender
+memang angka sungguhan.** Halaman dashboard sendiri tidak bisa diperiksa, karena sesi peramban
+ternyata sudah mati — `/siswa` menjawab 200 tetapi isinya halaman `/login`, bukan dashboard. Jadi
+pemeriksaannya dialihkan ke halaman publik sementara `/uji-count-up` yang merender pulau itu
+langsung dengan tiga nilai tetap. HTML dari server berisi persis:
+
+```
+poin:<span id="uji-poin">1.234</span>
+kg:<span id="uji-kg">12,5</span>
+nol:<span id="uji-nol">0</span>
+```
+
+`1.234` dan `12,5`, bukan `0`: yang dibaca pembaca layar — dan yang terlihat oleh klien tanpa
+JavaScript — adalah nilai sebenarnya, dan animasinya benar-benar hanya terjadi pada perubahan
+berikutnya. Halaman sementara itu sudah dihapus, dan `git status` sudah dipastikan bersih dari
+berkasnya sebelum commit.
+
+Karena pemeriksaan ini menuntut saldo bukan nol, saldo siswa demo dinaikkan sementara ke 1234 P
+lewat jalur sistem (`app.allow_profile_system_update`), lalu dipulihkan ke 0 P. Pemulihannya
+diperiksa langsung, bukan diasumsikan: 0 P, 0.00 kg, `unclaimed_orders_count = 0`,
+`preorder_blocked_until = null` — sama seperti sebelum Task 12 dimulai.
+
+**Yang benar-benar tidak bisa diverifikasi: apa pun yang butuh frame.** Daftar menu masuk bertahap
+sekali saja, kehalusan shimmer, denyut titik badge, dan angka saldo berakhir di nilai sebenarnya
+semuanya butuh renderer yang bergerak. Count-up khususnya: hook-nya berjalan di atas
+`requestAnimationFrame`, jadi di tab tanpa frame ia tampak diam di nilai lama — dan itu akan
+terbaca sebagai kerusakan kalau diperiksa sekarang. Satu akibat lain dari tab yang tidak
+dikomposit: halaman bersesi tidak bisa dimuat ulang sama sekali, karena login pun butuh hidrasi
+yang tidak selesai.
+
+Verifikasi visualnya, termasuk bagian "Verifikasi Akhir" yang menunggu inspector anti-slop dan
+tangkapan layar `/login` 360×560, menunggu jendela peramban tampil kembali.
 
 - [ ] **Step 8: Commit**
 

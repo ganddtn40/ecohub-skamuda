@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -79,6 +79,20 @@ export function MenuCatalog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<TicketData | null>(null);
+
+  /**
+   * Sambutan masuk hanya sekali per kunjungan.
+   *
+   * Berpindah stand mengganti isi daftarnya, dan tanpa penanda ini setiap
+   * perpindahan akan mengulang animasi masuknya dari awal - terasa seperti
+   * halaman yang memuat ulang, padahal cuma berganti pilihan. Setelah sapuan
+   * pertama selesai, kartu-kartu berikutnya muncul langsung.
+   */
+  const [sambutanSelesai, setSambutanSelesai] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSambutanSelesai(true), 900);
+    return () => clearTimeout(timer);
+  }, []);
 
   const cart = carts[standId] ?? {};
 
@@ -315,12 +329,20 @@ export function MenuCatalog({
                   {category}
                 </h3>
                 <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {items.map((item) => {
+                  {items.map((item, index) => {
                     const line = cart[item.id];
                     return (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between gap-3 rounded-card bg-white p-3.5"
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-card bg-white p-3.5",
+                          !sambutanSelesai && "motion-safe:animate-fade-up",
+                        )}
+                        style={
+                          sambutanSelesai
+                            ? undefined
+                            : { animationDelay: `${Math.min(index, 6) * 55}ms` }
+                        }
                       >
                         <div className="min-w-0">
                           <p className="truncate text-[15px] font-semibold text-ink">{item.name}</p>

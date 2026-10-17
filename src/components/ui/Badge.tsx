@@ -11,14 +11,24 @@ const TONES: Record<Tone, string> = {
   blue: "bg-sky-50 text-sky-700",
 };
 
-/** Penanda status/label. Dipakai bila ada informasi nyata, bukan hiasan. */
+/**
+ * Penanda status/label. Dipakai bila ada informasi nyata, bukan hiasan.
+ *
+ * `pulse` menambahkan satu titik kecil yang berdenyut pelan di depan teksnya -
+ * untuk status yang sedang berjalan, seperti pesanan yang sedang disiapkan.
+ * Yang berdenyut hanya titiknya, bukan badge-nya: teks yang ikut membesar-
+ * mengecil terbaca sebagai kedipan dan justru menyulitkan dibaca. Warnanya
+ * `bg-current`, jadi titiknya selalu sewarna dengan teks badge-nya sendiri.
+ */
 export function Badge({
   children,
   tone = "neutral",
+  pulse = false,
   className,
 }: {
   children: ReactNode;
   tone?: Tone;
+  pulse?: boolean;
   className?: string;
 }) {
   return (
@@ -29,6 +39,12 @@ export function Badge({
         className,
       )}
     >
+      {pulse ? (
+        <span
+          aria-hidden
+          className="h-1.5 w-1.5 shrink-0 rounded-full bg-current motion-safe:animate-pulse-dot"
+        />
+      ) : null}
       {children}
     </span>
   );

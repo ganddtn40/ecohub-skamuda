@@ -1,11 +1,23 @@
 import { cn } from "@/lib/cn";
 
+/**
+ * Kerangka saat data sedang dimuat.
+ *
+ * Sapuannya satu pita terang yang melintas, bukan denyut opacity seperti dulu:
+ * denyut membuat seluruh blok berkedip dan menarik mata ke arah yang salah,
+ * sedangkan sapuan terbaca sebagai "sedang diambil". Pita itu memakai
+ * `transform` sehingga tidak memicu cat ulang, dan letaknya di luar bidang saat
+ * animasinya dimatikan - jadi pada `prefers-reduced-motion: reduce` yang
+ * tersisa hanya blok sage yang tenang, bukan pita yang berhenti di tengah.
+ */
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
-      className={cn("animate-pulse rounded-control bg-mint-deep", className)}
-    />
+      className={cn("relative overflow-hidden rounded-control bg-mint-deep", className)}
+    >
+      <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent motion-safe:animate-shimmer" />
+    </div>
   );
 }
 

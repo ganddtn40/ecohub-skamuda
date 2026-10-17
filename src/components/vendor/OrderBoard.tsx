@@ -19,7 +19,12 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { ORDER_STATUS_META, STATUS_TONE, ACTIVE_ORDER_STATUSES } from "@/lib/constants";
+import {
+  ORDER_STATUS_META,
+  STATUS_TONE,
+  ACTIVE_ORDER_STATUSES,
+  IN_PROGRESS_ORDER_STATUSES,
+} from "@/lib/constants";
 import { mapOrderError } from "@/lib/order-errors";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -146,7 +151,12 @@ function OrderCard({ order, onChanged }: { order: VendorOrder; onChanged: () => 
           </div>
           <p className="text-small text-muted">{order.student_class ?? "Tanpa kelas"}</p>
         </div>
-        <Badge tone={STATUS_TONE[order.status]}>{meta.label}</Badge>
+        <Badge
+          tone={STATUS_TONE[order.status]}
+          pulse={IN_PROGRESS_ORDER_STATUSES.includes(order.status)}
+        >
+          {meta.label}
+        </Badge>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">

@@ -98,6 +98,19 @@ export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   "ready_for_pickup",
 ];
 
+/**
+ * Status yang benar-benar sedang bergerak menuju selesai, jadi pantas berdenyut.
+ *
+ * Sengaja bukan seluruh `ACTIVE_ORDER_STATUSES`: `awaiting_approval` masih
+ * menunggu jawaban penjual dan tidak bergerak sendiri, sementara `pending`
+ * adalah nilai enum lama. Yang berdenyut hanya dua keadaan yang memang sedang
+ * dikerjakan — dapur menyiapkan, atau pesanan menunggu diambil.
+ */
+export const IN_PROGRESS_ORDER_STATUSES: OrderStatus[] = [
+  "processing",
+  "ready_for_pickup",
+];
+
 /** Target daur ulang harian per siswa (kg) untuk circular progress di dashboard. */
 export const DAILY_RECYCLE_TARGET_KG = 1;
 

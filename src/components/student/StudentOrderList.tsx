@@ -8,7 +8,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Sheet } from "@/components/ui/Sheet";
 import { BookingTicket } from "@/components/student/BookingTicket";
 import { buttonStyles } from "@/components/ui/Button";
-import { ORDER_STATUS_META, ROUTE, STATUS_TONE, ACTIVE_ORDER_STATUSES } from "@/lib/constants";
+import {
+  ORDER_STATUS_META,
+  ROUTE,
+  STATUS_TONE,
+  ACTIVE_ORDER_STATUSES,
+  IN_PROGRESS_ORDER_STATUSES,
+} from "@/lib/constants";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { TicketData } from "@/types/database";
@@ -92,7 +98,12 @@ export function StudentOrderList({ orders }: { orders: StudentOrder[] }) {
                         {order.booking_code}
                       </p>
                     </div>
-                    <Badge tone={STATUS_TONE[order.status]}>{meta.label}</Badge>
+                    <Badge
+                      tone={STATUS_TONE[order.status]}
+                      pulse={IN_PROGRESS_ORDER_STATUSES.includes(order.status)}
+                    >
+                      {meta.label}
+                    </Badge>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-small text-muted">
