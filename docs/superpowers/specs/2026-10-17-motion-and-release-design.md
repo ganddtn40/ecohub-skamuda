@@ -304,6 +304,30 @@ menyatakan bahwa satu kali pemuatan sudah lewat.
 9. Fitur lama utuh: pesanan normal dan jalur penalti masih bisa ditelusuri di
    browser seperti pada putaran verifikasi sebelumnya.
 
+### Hasil verifikasi (produksi, 17 Okt 2026)
+
+Kesembilan butir di atas terpenuhi; angka lengkapnya ada di bagian "Hasil
+verifikasi (Task 12)" pada rencana. Tiga hal dicatat di sini karena menyentuh
+keputusan, bukan sekadar pelaksanaan:
+
+1. **Risiko "animasi justru membuat halaman lebih berat" datang dari mesin yang
+   tidak diperkirakan.** GSAP tidak menambah satu byte pun ke bundel awal:
+   `First Load JS shared by all` tetap 103 kB, dan ia hanya diambil di tingkat
+   `full`. Yang menambah 40-42 kB pada lima rute adalah framer-motion, yang ikut
+   masuk karena `StatTile` menjadi komponen klien - termasuk di rute publik
+   `/papan-skor`. Ini konsekuensi nyata dari keputusan Task 7, dan satu-satunya
+   biaya yang, bila tidak diinginkan, menuntut perubahan desain: `StatTile`
+   dibuat server-rendered khusus untuk rute itu.
+2. **`opacity: 0` di HTML server bukan nol, tapi tidak ada yang hilang tanpa
+   JavaScript.** Dua puluh tujuh elemen di delapan rute lahir dengan
+   `opacity: 0`; semuanya `[data-stagger-item]`, dan setiap rute mengirim aturan
+   `<noscript>` yang mengembalikannya ke `opacity: 1` beserta `transform: none`.
+   Yang benar-benar nol adalah elemen `opacity: 0` yang tidak tertutup aturan
+   itu: 0 dari 27.
+3. **Peringatan reduced-motion milik Framer hanya muncul di dev.** Konsol
+   produksi bersih di lima halaman termasuk saat masuk dan keluar akun, jadi
+   tidak ada yang perlu diakali untuk hidrasi maupun untuk peringatan itu.
+
 ## 9. Rilis
 
 **`supabase/migrations/latest_update.sql`.** Satu berkas, idempoten, dibagi dua

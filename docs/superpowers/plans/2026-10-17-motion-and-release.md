@@ -845,3 +845,114 @@ git push -u origin feat/preorder-hardening
 Lalu buat PR ke `main` (`gh pr create` bila `gh` tersedia; bila tidak, berikan
 URL pembuatannya). Badan PR memuat ringkasan, tabel biaya, dan dua penghalang
 produksi dari Task 11 yang butuh tindakan Anda.
+
+---
+
+## Hasil verifikasi (Task 12)
+
+Semua angka di bawah diambil dari **hasil produksi** (`npm run build` lalu
+`npm start`), bukan dari server dev, pada mesin yang melaporkan
+`prefers-reduced-motion: reduce` sehingga tingkat perangkat aslinya `lite`.
+
+### Step 1 — Gerbang lengkap
+
+| Gerbang | Perintah | Hasil |
+| --- | --- | --- |
+| Asersi SQL | `scripts/check-sql.mjs` (001 + 002 + 003) | 13 + 10 + 13 = 36 asersi, 0 `GAGAL`, `HASIL: semua berkas uji lulus (3 berkas)` |
+| Tipe | `bash scripts/check-types` | `tsc: 0 error` |
+| Tingkat perangkat | `check-motion-tiers.ts` | `LULUS: 9` |
+| Aturan poin | `check-preorder-rules.ts` | `HASIL: semua aturan perhitungan poin lulus` |
+| Build | `npm run build` | keluar 0, tabel First Load JS tercetak |
+
+Catatan: `check-preorder-rules.ts` sempat terlihat "Exited with code 1"; itu
+artefak pipa `Tee-Object`/`Select-String` di PowerShell, bukan kegagalan skrip.
+Log: `%TEMP%\opencode\gate-task12.log`, `build-task12.log`.
+
+### Step 2 — Biaya bundel (sebelum = Task 1)
+
+| Rute | Sebelum | Sesudah | Delta | Sebab |
+| --- | --- | --- | --- | --- |
+| `/` | 114 kB | 155 kB | +41 | framer-motion masuk lewat `StatTile` yang kini komponen klien |
+| `/papan-skor` | 114 kB | 156 kB | +42 | idem, di halaman publik |
+| `/petugas` | 177 kB | 217 kB | +40 | idem |
+| `/siswa` | 175 kB | 216 kB | +41 | idem |
+| `/siswa/riwayat` | 171 kB | 212 kB | +41 | idem |
+| `/kantin` | 220 kB | 222 kB | +2 | template `(app)` (`PageFade`) + pembulatan kolom |
+| `/siswa/pesanan` | 229 kB | 230 kB | +1 | idem |
+| `/kantin/menu` | 218 kB | 219 kB | +1 | template `(app)` + pembulatan kolom |
+| `/kantin/scan` | 185 kB | 186 kB | +1 | idem |
+| `/petugas/riwayat` | 174 kB | 175 kB | +1 | idem |
+| `/login` | 178 kB | 179 kB | +1 | template `(auth)` |
+| `/cek-email` | 106 kB | 107 kB | +1 | idem |
+| `/siswa/kantin` | 233 kB | 233 kB | 0 | framer-motion sudah ada di rute itu sejak awal |
+| `/lupa-password`, `/register`, `/reset-password`, `/siswa/qr`, `/_not-found`, `/auth/callback` | - | - | 0 | tidak berubah |
+| **First Load JS shared by all** | **103 kB** | **103 kB** | **0** | GSAP tidak pernah masuk bundel awal |
+
+Artinya: satu-satunya biaya nyata adalah lantai framer-motion (~40 kB) pada
+lima rute yang sebelumnya belum mengirimnya. GSAP tetap di potongan berkas
+async dan di `lite` tidak pernah diambil: `useGsap()`
+(`src/lib/use-gsap.ts:80`) keluar lebih dulu sebelum `loadGsap()` dipanggil,
+jadi `import("gsap")` memang tidak pernah jalan — dan di produksi efeknya
+terukur sebagai titik badge tanpa gaya inline dan tanpa tween. Angka +1/+2 kB
+adalah pembulatan kolom ditambah pembungkus transisi halaman, bukan pustaka
+baru.
+
+Tindak lanjut yang tersisa untuk Anda: `StatTile` di `/papan-skor` yang publik
+ikut membayar +42 kB; kalau tidak mau, `StatTile` bisa dibuat server-rendered
+khusus di rute itu.
+
+### Step 3 — Bukti browser (produksi)
+
+Alur lama, persis seperti putaran verifikasi sebelumnya:
+
+| Langkah | Bukti |
+| --- | --- |
+| Siswa buat pesanan tunai "Air Mineral" (Kantin Pakde) | `SKM-I1-JE8Q`, `awaiting_approval`, `payment_mode=cash`, `points_paid=0` |
+| Penjual: Terima Pesanan | kartu jadi "Disiapkan" |
+| Penjual: Siap Diambil | tombol jadi "Selesai Diambil" + "Tidak Diambil" |
+| Penjual: Selesai Diambil | `status=completed`; poin siswa tidak tersentuh |
+| Pelanggaran 1: pesanan poin 300 P, "Tidak Diambil" | `SKM-I1-XTBG` jadi `unclaimed`, `points_refunded=300`, saldo kembali 700, `unclaimed_orders_count=1`, `preorder_blocked_until=null` |
+| Pelanggaran 2: pesanan poin 300 P, "Tidak Diambil" | `SKM-I1-PQGN` jadi `unclaimed`, `points_refunded=0` (hangus), saldo 400, `unclaimed_orders_count=2`, `preorder_blocked_until=2026-10-20T08:06:48Z` (+72 jam) |
+| Siswa membuka `/siswa/kantin` saat diblokir | "Pre-Order Kantin diblokir sementara ... memesan lagi pada 20 Okt 2026", **0 tombol "Tambah"** |
+
+Dialog konfirmasi "Tidak Diambil" berbunyi tepat seperti spec ("Pelanggaran
+pertama poinnya masih dikembalikan; pelanggaran kedua poinnya hangus dan
+pre-order siswa diblokir 3 hari") dengan tombol Batal / "Tandai tidak diambil".
+
+Gerak, diukur di produksi:
+
+- **Denyut badge status (GSAP)**: dengan `data-tier="full"` lalu navigasi lunak,
+  titik badge punya gaya inline dan nilainya bergerak
+  (skala 0.932 → 0.899 → 0.858 → 0.830 → 0.807 → 0.800 → 0.808 → 0.825,
+  opasitas 0.813 → 0.723 → 0.609 → 0.533 → 0.469 → 0.450 → 0.471 → 0.519) —
+  ayunan 1,1 detik menuju 0,8 / 0,45 lalu kembali, sama seperti spec.
+  Dengan `data-tier="lite"` titik yang sama **tanpa gaya inline** dan tetap
+  `transform: none; opacity: 1`. Jadi jalur `import()` malas GSAP benar-benar
+  hidup di bundel produksi dan benar-benar mati di `lite`.
+- **Pegas modal di bawah `reduce`**: panel `ConfirmDialog` hanya punya dua nilai
+  (`matrix(0.96,0,0,0.96,0,8)` lalu `none`) — memotong, tanpa nilai antara,
+  konsisten dengan temuan Task 8.
+- **Transisi halaman**: sudah dibuktikan di Task 9 (opasitas 0,000 → 1,000,
+  `transform` selalu `none`, bilah keranjang tetap menempel, `scrollTop` 0).
+- Tanpa-preference penuh (bukan `lite`) diuji di dev lewat stub `matchMedia`
+  sementara pada Task 3-9; di produksi yang diperiksa adalah `lite` (mesin ini)
+  dan jalur `full` yang dipaksa, bukan preferensi pengguna.
+
+Pembersihan setelah uji: pesanan uji dihapus (`orders 0`, `order_items 0`,
+`voucher ber-order 0`) dan siswa demo dikembalikan ke `points_balance 0`,
+`unclaimed_orders_count 0`, `preorder_blocked_until null`.
+
+### Step 4 — Anti-Slop dan hidrasi
+
+| Periksa | Hasil |
+| --- | --- |
+| Emoji | 0 di teks yang disajikan, 5 rute diperiksa |
+| Lantai huruf 13px | 0 elemen di bawah 13px: `/siswa` (54 elemen teks), `/siswa/kantin` (60), `/siswa/pesanan` (36), `/siswa/riwayat` (38), `/papan-skor` (200) |
+| Angka `tnum` | 35 dari 35 angka di `/papan-skor` berada di dalam `.tnum`; 0 pelanggar |
+| Gradient dekoratif | `bg-gradient-` hanya di `Skeleton.tsx` (pita shimmer); satu-satunya `linear-gradient` lain adalah `.scrim` di `globals.css` yang memang pengecualian tunggal untuk keterbacaan di atas foto |
+| Tanpa JavaScript | Semua 27 `opacity:0` di HTML SSR (8 rute) berada pada elemen `[data-stagger-item]`, dan tiap rute mengirim `<noscript><style>[data-stagger-item]{opacity:1 !important;transform:none !important}</style></noscript>` — 0 yang tidak tertutup |
+| Hidrasi | Konsol produksi kosong di `/siswa`, `/siswa/kantin`, `/siswa/pesanan`, `/siswa/riwayat`, `/papan-skor`, termasuk saat masuk dan keluar akun: tanpa peringatan hidrasi, tanpa peringatan React soal `data-tier` |
+| Sisa gerak | `/papan-skor` 47 dari 47 item daftar berakhir di opasitas penuh; tidak ada konten yang tersangkut di opasitas 0 setelah hidrasi |
+
+Peringatan reduced-motion milik Framer **tidak** muncul di produksi; itu pesan
+dev-only, dan di dev memang muncul (dicatat di Task 9).
