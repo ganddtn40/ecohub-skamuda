@@ -58,6 +58,8 @@ Desain **Clean Emerald Eco-App**: header emerald `#0A7A44` dengan sudut bawah me
 skamuda-ecohub/
 ├─ supabase/
 │  ├─ migrations/001_production_live.sql   # skema, RLS, trigger, RPC (jalankan PERTAMA)
+│  ├─ migrations/latest_update.sql         # pembaruan pre-order, tiga bagian berlabel
+│  ├─ migrations/00{2,3,4}_*.sql           # riwayat: isi latest_update.sql, dipecah
 │  ├─ seed.sql                             # data awal: kelas, config, akun demo (jalankan KEDUA)
 │  └─ production_seed_roles.sql            # query provisioning peran admin/petugas/kantin
 ├─ src/
@@ -99,8 +101,13 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>   # opsional, hanya untuk tugas adm
 Buka **Supabase Dashboard → SQL Editor**, lalu jalankan berurutan:
 1. `supabase/migrations/001_production_live.sql`: tabel, enum, indeks, trigger, RPC, dan seluruh kebijakan RLS.
 2. `supabase/seed.sql`: 30 kelas resmi, jenis sampah, tier voucher, 2 stand kantin + contoh menu, dan 4 akun demo.
+3. `supabase/migrations/latest_update.sql`: pembaruan pre-order (nilai status baru, penalti siswa, mode bayar poin, dan aturan satu pesanan aktif). Berkas ini **tiga bagian berlabel dan harus ditempel dua kali** — Bagian 1, lalu Bagian 2, lalu Bagian 3 untuk memastikan. Alasannya ada di kepala berkasnya.
 
 > Jalankan migrasi dulu, baru seed.
+
+> Dari terminal, seluruh berkas sekaligus bisa: `node --env-file=.env.local scripts/db.mjs supabase/migrations/latest_update.sql`.
+
+Langkah lengkap untuk deploy ke produksi, termasuk dua penghalang yang sudah diketahui (email reset dan realtime), ada di [`docs/DEPLOY-CHECKLIST.md`](docs/DEPLOY-CHECKLIST.md). Berkas `00{2,3,4}_*.sql` di folder migrations adalah riwayat yang tidak perlu dijalankan lagi; isinya sudah ada di `latest_update.sql`.
 
 ### 5. (Opsional) Aktifkan konfirmasi email
 Di **Authentication → Providers → Email**, pastikan email confirmation aktif. Arahkan **Site URL**/**Redirect URLs** ke `http://localhost:3000/auth/callback` (dan domain produksi setelah deploy).
