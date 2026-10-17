@@ -10,10 +10,14 @@
 -- ADA DUA BAGIAN YANG HARUS DIJALANKAN TERPISAH, DAN ITU BUKAN PILIHAN.
 -- Postgres menolak memakai nilai yang baru ditambahkan ke sebuah tipe enum di
 -- transaksi yang sama dengan saat nilai itu ditambahkan ("unsafe use of new
--- value"). SQL Editor Supabase menjalankan satu tempelan sebagai satu
+-- value", SQLSTATE 55P04). Satu tempelan di SQL Editor berjalan sebagai satu
 -- transaksi, jadi Bagian 1 (menambah nilai enum) dan Bagian 2 (memakainya di
 -- default kolom, index unik parsial, dan RPC) tidak boleh berada dalam satu
--- tempelan. Menempel seluruh berkas sekaligus akan gagal di Bagian 2.
+-- tempelan. Pada basis data yang belum pernah menjalankan berkas ini, menempel
+-- seluruh berkas sekaligus akan gagal di Bagian 2. Pada basis data yang sudah
+-- pernah menjalankannya tidak gagal, karena nilai enum-nya sudah commit dari
+-- dulu - jadi jangan menilai keamanan berkas ini dari basis data yang sudah
+-- berisi.
 --
 -- Idempoten: Bagian 1 dan Bagian 2 aman dijalankan berulang kali. Bagian 3
 -- hanya membaca.
