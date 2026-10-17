@@ -1,4 +1,7 @@
-import type { CSSProperties, ReactNode } from "react";
+"use client";
+
+import type { ReactNode } from "react";
+import { StaggerItem } from "@/components/motion/StaggerGroup";
 import { cn } from "@/lib/cn";
 
 type Tone = "green" | "amber" | "neutral";
@@ -16,6 +19,11 @@ const ICON_TONES: Record<Tone, string> = {
  * dipisahkan oleh jarak, dan seluruh kelompok duduk di atas satu bidang putih
  * yang disediakan pemanggilnya. Dengan begitu tidak pernah terbentuk deretan
  * kartu kembar yang seragam.
+ *
+ * Kartu ini juga satu butir stagger: ia masuk bersama kartu lain di pita yang
+ * sama dan terangkat sedikit saat disentuh. Karena jeda antar kartu sekarang
+ * diatur `staggerChildren` kelompoknya, prop `style` yang dulu mengatur jeda CSS
+ * tidak ada lagi.
  */
 export function StatTile({
   icon,
@@ -25,7 +33,6 @@ export function StatTile({
   hint,
   tone = "green",
   className,
-  style,
 }: {
   icon: ReactNode;
   label: string;
@@ -35,10 +42,9 @@ export function StatTile({
   hint?: string;
   tone?: Tone;
   className?: string;
-  style?: CSSProperties;
 }) {
   return (
-    <div className={cn("min-w-0", className)} style={style}>
+    <StaggerItem hover className={cn("min-w-0", className)}>
       <p className="flex items-baseline gap-1.5">
         <span className="tnum text-[26px] font-bold leading-none text-ink">{value}</span>
         {unit ? <span className="text-small font-semibold text-muted">{unit}</span> : null}
@@ -50,6 +56,6 @@ export function StatTile({
         {label}
       </span>
       {hint ? <p className="mt-1.5 text-small text-muted">{hint}</p> : null}
-    </div>
+    </StaggerItem>
   );
 }

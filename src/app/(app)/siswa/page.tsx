@@ -7,6 +7,7 @@ import { PageTitle } from "@/components/layout/PageTitle";
 import { StatTile } from "@/components/layout/StatTile";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { CountUp } from "@/components/ui/CountUp";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buttonStyles } from "@/components/ui/Button";
 import { DepositList, type DepositListItem } from "@/components/student/DepositList";
@@ -66,51 +67,50 @@ export default async function StudentDashboard() {
         description="Ringkasan poin, hasil daur ulang, dan pesanan kantinmu diperbarui otomatis."
       />
 
-      <section className="grid gap-3 sm:grid-cols-3" aria-label="Ringkasan siswa">
-        <StatTile
-          className="motion-safe:animate-fade-up"
-          icon={<Coins size={18} />}
-          label="Saldo poin"
-          value={<CountUp value={profile.points_balance} />}
-          unit="P"
-          tone="amber"
-          hint="Bisa ditukar di kantin"
-        />
-        <StatTile
-          className="motion-safe:animate-fade-up"
-          style={{ animationDelay: "70ms" }}
-          icon={<Recycle size={18} />}
-          label="Total daur ulang"
-          value={<CountUp value={profile.total_recycled_kg} decimals={2} />}
-          unit="kg"
-          tone="green"
-          hint="Sejak akun aktif"
-        />
-
-        <div
-          className="flex items-center gap-4 rounded-card bg-white p-4 motion-safe:animate-fade-up sm:col-span-1"
-          style={{ animationDelay: "140ms" }}
-        >
-          <ProgressRing
-            value={progress}
-            label={`${formatNumber(Math.min(progress, 1) * 100)}%`}
-            sublabel="hari ini"
-            size={96}
-            stroke={9}
+      <section aria-label="Ringkasan siswa">
+        <StaggerGroup className="grid gap-3 sm:grid-cols-3">
+          <StatTile
+            icon={<Coins size={18} />}
+            label="Saldo poin"
+            value={<CountUp value={profile.points_balance} />}
+            unit="P"
+            tone="amber"
+            hint="Bisa ditukar di kantin"
           />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-eco-700">
-              <Target size={16} />
-              <span className="text-small font-semibold">Target harian</span>
+          <StatTile
+            icon={<Recycle size={18} />}
+            label="Total daur ulang"
+            value={<CountUp value={profile.total_recycled_kg} decimals={2} />}
+            unit="kg"
+            tone="green"
+            hint="Sejak akun aktif"
+          />
+
+          <StaggerItem
+            hover
+            className="flex items-center gap-4 rounded-card bg-white p-4 sm:col-span-1"
+          >
+            <ProgressRing
+              value={progress}
+              label={`${formatNumber(Math.min(progress, 1) * 100)}%`}
+              sublabel="hari ini"
+              size={96}
+              stroke={9}
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-eco-700">
+                <Target size={16} />
+                <span className="text-small font-semibold">Target harian</span>
+              </div>
+              <p className="tnum mt-1 text-[26px] font-bold leading-none text-ink">
+                {formatKg(todayKg)}
+              </p>
+              <p className="mt-1.5 text-small text-muted">
+                dari target {formatKg(DAILY_RECYCLE_TARGET_KG)}
+              </p>
             </div>
-            <p className="tnum mt-1 text-[26px] font-bold leading-none text-ink">
-              {formatKg(todayKg)}
-            </p>
-            <p className="mt-1.5 text-small text-muted">
-              dari target {formatKg(DAILY_RECYCLE_TARGET_KG)}
-            </p>
-          </div>
-        </div>
+          </StaggerItem>
+        </StaggerGroup>
       </section>
 
       {/* Tiga pintu masuk utama. Satu bidang, tiga baris - bukan tiga kartu kembar. */}

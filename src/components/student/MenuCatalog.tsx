@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { BookingTicket } from "@/components/student/BookingTicket";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { PICKUP_SLOTS, type PickupSlot } from "@/lib/constants";
 import { formatRupiah } from "@/lib/format";
 import { mapOrderError } from "@/lib/order-errors";
@@ -328,75 +329,71 @@ export function MenuCatalog({
                 <h3 className="text-[17px] font-bold text-ink">
                   {category}
                 </h3>
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {items.map((item, index) => {
-                    const line = cart[item.id];
-                    return (
-                      <li
-                        key={item.id}
-                        className={cn(
-                          "flex items-center justify-between gap-3 rounded-card bg-white p-3.5",
-                          !sambutanSelesai && "motion-safe:animate-fade-up",
-                        )}
-                        style={
-                          sambutanSelesai
-                            ? undefined
-                            : { animationDelay: `${Math.min(index, 6) * 55}ms` }
-                        }
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-[15px] font-semibold text-ink">{item.name}</p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="tnum text-[15px] font-bold text-eco-700">
-                              {formatRupiah(item.price_idr)}
-                            </span>
-                            {item.points_price ? (
-                              <span className="tnum text-small text-muted">
-                                {item.points_price} P
+                <StaggerGroup animateOnMount={!sambutanSelesai}>
+                  <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {items.map((item) => {
+                      const line = cart[item.id];
+                      return (
+                        <StaggerItem
+                          as="li"
+                          hover
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 rounded-card bg-white p-3.5"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-[15px] font-semibold text-ink">{item.name}</p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="tnum text-[15px] font-bold text-eco-700">
+                                {formatRupiah(item.price_idr)}
                               </span>
+                              {item.points_price ? (
+                                <span className="tnum text-small text-muted">
+                                  {item.points_price} P
+                                </span>
+                              ) : null}
+                            </div>
+                            {line?.notes ? (
+                              <p className="mt-1 truncate text-small text-gold-600">
+                                Catatan: {line.notes}
+                              </p>
                             ) : null}
                           </div>
-                          {line?.notes ? (
-                            <p className="mt-1 truncate text-small text-gold-600">
-                              Catatan: {line.notes}
-                            </p>
-                          ) : null}
-                        </div>
 
-                        {line && line.qty > 0 ? (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => decreaseItem(item.id)}
-                              aria-label={`Kurangi ${item.name}`}
-                              className={cn("grid h-11 w-11 place-items-center rounded-control text-ink hover:bg-mint", PRESS)}
-                            >
-                              <Minus size={16} />
-                            </button>
-                            <span className="tnum w-6 text-center text-[15px] font-bold">{line.qty}</span>
+                          {line && line.qty > 0 ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => decreaseItem(item.id)}
+                                aria-label={`Kurangi ${item.name}`}
+                                className={cn("grid h-11 w-11 place-items-center rounded-control text-ink hover:bg-mint", PRESS)}
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span className="tnum w-6 text-center text-[15px] font-bold">{line.qty}</span>
+                              <button
+                                type="button"
+                                onClick={() => addItem(item.id)}
+                                aria-label={`Tambah ${item.name}`}
+                                className={cn("grid h-11 w-11 place-items-center rounded-control bg-eco-600 text-white hover:bg-eco-700", PRESS)}
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => addItem(item.id)}
-                              aria-label={`Tambah ${item.name}`}
-                              className={cn("grid h-11 w-11 place-items-center rounded-control bg-eco-600 text-white hover:bg-eco-700", PRESS)}
+                              className={cn("inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-eco-50 px-4 text-[15px] font-semibold text-eco-700 hover:bg-eco-100", PRESS)}
                             >
                               <Plus size={16} />
+                              Tambah
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => addItem(item.id)}
-                            className={cn("inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-eco-50 px-4 text-[15px] font-semibold text-eco-700 hover:bg-eco-100", PRESS)}
-                          >
-                            <Plus size={16} />
-                            Tambah
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                          )}
+                        </StaggerItem>
+                      );
+                    })}
+                  </ul>
+                </StaggerGroup>
               </section>
             ))}
           </div>
