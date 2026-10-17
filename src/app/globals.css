@@ -91,6 +91,24 @@
   }
 }
 
+/*
+ * Perangkat lemah kehilangan hiasannya lebih dulu.
+ *
+ * Sapuan kerangka dan motif yang melayang adalah hiasan: tidak satu pun
+ * menyampaikan informasi. Di perangkat yang dilaporkan `lite` oleh skrip
+ * tingkat perangkat, ketiganya dimatikan sebelum React sempat hidup.
+ * `animate-fade-up` sengaja tidak ikut dimatikan — ia pendek, dan mematikan
+ * yang pendek membuat daftar berkedip tanpa alasan.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-tier="lite"] .animate-shimmer,
+  [data-tier="lite"] .animate-drift,
+  [data-tier="lite"] .animate-slow-zoom,
+  [data-tier="lite"] .animate-ring-sweep {
+    animation: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .reveal {
