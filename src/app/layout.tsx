@@ -27,7 +27,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={jakarta.variable}>
+    /*
+      `suppressHydrationWarning` di sini bukan kelalaian yang disamarkan.
+
+      Skrip tingkat perangkat di bawah menulis `data-tier` ke elemen ini sebelum
+      React hidup, dan React 19 menandai perbedaan itu sebagai kesalahan hidrasi
+      — betul secara teknis, tapi tidak berguna: nilai yang benar memang hanya
+      bisa diketahui peramban. Ini persis kasus yang disebut dokumentasi React
+      untuk atribut ini, dan cara yang sama dipakai pustaka tema yang menulis
+      `class` ke `<html>` sebelum hidrasi.
+
+      Yang diredam hanya perbandingan atribut pada elemen ini; anak-anaknya
+      tetap diperiksa seperti biasa.
+    */
+    <html lang="id" className={jakarta.variable} suppressHydrationWarning>
       <body>
         {/*
           Tingkat perangkat dipasang sebelum cat pertama, dan harus begitu:
