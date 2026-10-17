@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Medal } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useScrollStagger } from "@/lib/use-scroll-stagger";
 import { formatKg, formatNumber } from "@/lib/format";
 import { JURUSAN } from "@/lib/constants";
 import type { ClassLeaderboardRow } from "@/types/database";
@@ -16,6 +17,10 @@ type Filter = "SEMUA" | (typeof JURUSAN)[number];
  */
 export function ClassLeaderboard({ rows }: { rows: ClassLeaderboardRow[] }) {
   const [filter, setFilter] = useState<Filter>("SEMUA");
+  const wadah = useRef<HTMLDivElement | null>(null);
+
+  // Barisnya elemen biasa, jadi boleh bergeser sedikit saat masuk.
+  useScrollStagger(wadah);
 
   const filtered = useMemo(
     () => (filter === "SEMUA" ? rows : rows.filter((row) => row.jurusan === filter)),
@@ -25,7 +30,7 @@ export function ClassLeaderboard({ rows }: { rows: ClassLeaderboardRow[] }) {
   const filters: Filter[] = ["SEMUA", ...JURUSAN];
 
   return (
-    <div>
+    <div ref={wadah}>
       <div
         role="tablist"
         aria-label="Filter jurusan"
@@ -67,6 +72,7 @@ export function ClassLeaderboard({ rows }: { rows: ClassLeaderboardRow[] }) {
               return (
                 <li
                   key={row.class_name}
+                  data-stagger
                   className="flex items-center gap-4 rounded-card bg-white px-4 py-3.5"
                 >
                   <span

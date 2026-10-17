@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { downloadCsv, toCsv } from "@/lib/csv";
+import { useScrollStagger } from "@/lib/use-scroll-stagger";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
 export interface WasteHistoryRow {
@@ -17,6 +19,13 @@ export interface WasteHistoryRow {
 }
 
 export function WasteHistoryTable({ rows }: { rows: WasteHistoryRow[] }) {
+  const wadah = useRef<HTMLDivElement | null>(null);
+
+  // `y: 0`: baris tabel hanya beranimasi opacity. `transform` pada
+  // `display: table-row` tidak didukung merata, dan baris yang tidak bergeser
+  // di mesin mana pun tetap baris yang sama di semua mesin.
+  useScrollStagger(wadah, { y: 0 });
+
   function exportCsv() {
     const headers = [
       "Tanggal",
@@ -52,7 +61,7 @@ export function WasteHistoryTable({ rows }: { rows: WasteHistoryRow[] }) {
         </Button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-card bg-white">
+      <div ref={wadah} className="mt-4 overflow-x-auto rounded-card bg-white">
         <table className="w-full min-w-[720px] border-collapse text-[15px]">
           <thead>
             <tr className="bg-mint text-left text-small text-muted">
@@ -67,7 +76,7 @@ export function WasteHistoryTable({ rows }: { rows: WasteHistoryRow[] }) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-b border-line last:border-b-0">
+              <tr key={row.id} data-stagger className="border-b border-line last:border-b-0">
                 <td className="whitespace-nowrap px-4 py-3 text-muted">
                   {formatDateTime(row.created_at)}
                 </td>
