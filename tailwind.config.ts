@@ -113,14 +113,15 @@ const config: Config = {
           to: { transform: "translateX(100%)" },
         },
         /**
-         * Denyut titik status pesanan. Pelan dan dangkal: titik ini menandakan
-         * "sedang berjalan", dan yang perlu terlihat berdenyut hanya titiknya,
-         * bukan teks status di sebelahnya.
+         * Denyut titik status pesanan kini dipegang GSAP
+         * (`src/components/ui/PulseDot.tsx`), bukan CSS.
+         *
+         * Bukan penukaran yang setara. Denyut itu berjalan tanpa akhir, dan
+         * pengguna yang meminta gerak dikurangi atau memakai perangkat tingkat
+         * `lite` tidak boleh menjalankannya sama sekali — bukan diperlambat.
+         * Sebelum ini aturan `motion-safe:` yang menjaganya; sekarang yang tidak
+         * menjalankannya adalah mesin yang tidak pernah dimuat di sana.
          */
-        "pulse-dot": {
-          "0%, 100%": { opacity: "0.45", transform: "scale(0.8)" },
-          "50%": { opacity: "1", transform: "scale(1)" },
-        },
       },
       animation: {
         "fade-up": "fade-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both",
@@ -131,7 +132,6 @@ const config: Config = {
         "ring-sweep": "ring-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) both",
         "slow-zoom": "slow-zoom 22s ease-in-out infinite alternate",
         shimmer: "shimmer 1.6s ease-in-out infinite",
-        "pulse-dot": "pulse-dot 2.2s ease-in-out infinite",
       },
     },
   },

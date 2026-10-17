@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { PulseDot } from "@/components/ui/PulseDot";
 
 type Tone = "neutral" | "green" | "amber" | "red" | "blue";
 
@@ -40,10 +41,7 @@ export function Badge({
       )}
     >
       {pulse ? (
-        <span
-          aria-hidden
-          className="h-1.5 w-1.5 shrink-0 rounded-full bg-current motion-safe:animate-pulse-dot"
-        />
+        <PulseDot className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
       ) : null}
       {children}
     </span>
