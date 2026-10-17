@@ -1744,18 +1744,37 @@ git commit -m "feat(motion): stagger entries, shimmer skeletons, and count up ba
 
 Dijalankan setelah seluruh task selesai.
 
-- [ ] `npx tsc --noEmit` keluar 0.
-- [ ] `npm run build` berhasil dan seluruh rute terkompilasi.
-- [ ] `node --experimental-strip-types scripts/check-preorder-rules.ts` keluar 0.
-- [ ] Ketiga skrip SQL di `supabase/tests/` menghasilkan nol `GAGAL:`.
-- [ ] Migrasi 002 dan 003 dijalankan dua kali tanpa error.
+- [x] `npx tsc --noEmit` keluar 0. (`bash scripts/check-types` menutup Task 12 dengan `tsc: 0 error`.)
+- [x] `npm run build` berhasil dan seluruh rute terkompilasi.
+- [x] `node --experimental-strip-types scripts/check-preorder-rules.ts` keluar 0.
+- [x] Ketiga skrip SQL di `supabase/tests/` menghasilkan nol `GAGAL:`. (36 pernyataan, 0 gagal.)
+- [x] Migrasi 002 dan 003 dijalankan dua kali tanpa error. (Keduanya keluar 0, tanpa baris error,
+      dan seluruh 36 pernyataan tetap lulus sesudahnya. Penjaganya memang ada di berkasnya:
+      `add value if not exists`, `add column if not exists`, `exception when duplicate_object`,
+      `create index if not exists`, `drop function if exists`, `create or replace`.)
 - [ ] E2E alur normal: pesan → Terima → Siap → Selesai, sebagai tiga peran berbeda.
+      **Tertahan.** Mesin keadaannya sudah diuji di tingkat basis data oleh
+      `003_preorder_resolution.sql` (13 pernyataan), dan bagian alurnya sudah dijalankan di
+      peramban pada Task 5–7; yang belum adalah satu putaran penuh sesudah seluruh Task 11–12
+      masuk.
 - [ ] E2E alur penalti: tolak → poin kembali; pesan lagi → Tidak Diambil dua kali → poin
       hangus pada yang kedua, spanduk blokir muncul, tombol pesan hilang.
+      **Tertahan, alasan sama** — aturannya sendiri lulus di tingkat basis data.
 - [ ] Inspector anti-slop pada `/`, `/papan-skor`, `/login`, `/lupa-password`,
-      `/reset-password`, `/siswa/kantin`, dan `/kantin`: 0 FAIL.
-- [ ] Screenshot `/login` pada lebar 360px dan tinggi 560px.
-- [ ] `git log` bersih, `.env.local` tidak pernah ikut ter-commit.
+      `/reset-password`, `/siswa/kantin`, dan `/kantin`: 0 FAIL. **Tertahan**: inspector itu
+      bekerja di peramban sungguhan, dan separuh halamannya juga butuh sesi.
+- [ ] Screenshot `/login` pada lebar 360px dan tinggi 560px. **Tertahan**, sebab yang sama.
+- [x] `git log` bersih, `.env.local` tidak pernah ikut ter-commit. (`git log --all -- .env.local`
+      kosong; berkasnya juga masih terdaftar di `.gitignore`.)
+
+Pemeriksaan Task 8–10 (mobile 360/320/390 px, `scroll-mb-32`, tautan kedaluwarsa) sudah dijalankan
+di peramban saat task-nya masing-masing, jadi yang tertahan di daftar di atas adalah putaran
+**penutup** sesudah Task 11–12, bukan pemeriksaan yang belum pernah dilakukan sama sekali.
+
+Satu sebab untuk keempat kotak yang tertahan: tab peramban berhenti dikomposit di tengah
+pengerjaan, sehingga `requestAnimationFrame` tidak pernah dipanggil dan tangkapan layar ditolak
+sistem. Tanpa frame tidak ada animasi yang bisa diamati, dan halaman bersesi bahkan tidak bisa
+dimuat ulang karena login pun butuh hidrasi yang tidak selesai. Rinciannya ada di Step 7 Task 12.
 
 ## Yang Butuh Tangan Pengguna
 
