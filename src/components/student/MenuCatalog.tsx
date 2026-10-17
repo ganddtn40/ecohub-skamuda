@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/Button";
+import { Button, PRESS } from "@/components/ui/Button";
 import { Field, Select, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -272,7 +272,8 @@ export function MenuCatalog({
               aria-selected={active}
               onClick={() => setStandId(stand.id)}
               className={cn(
-                "inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[15px] font-semibold transition-colors",
+                "inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[15px] font-semibold",
+                PRESS,
                 active
                   ? "border-eco-600 bg-eco-600 text-white"
                   : "bg-white text-ink-soft hover:bg-mint",
@@ -346,7 +347,7 @@ export function MenuCatalog({
                               type="button"
                               onClick={() => decreaseItem(item.id)}
                               aria-label={`Kurangi ${item.name}`}
-                              className="grid h-11 w-11 place-items-center rounded-control text-ink transition-colors hover:bg-mint"
+                              className={cn("grid h-11 w-11 place-items-center rounded-control text-ink hover:bg-mint", PRESS)}
                             >
                               <Minus size={16} />
                             </button>
@@ -355,7 +356,7 @@ export function MenuCatalog({
                               type="button"
                               onClick={() => addItem(item.id)}
                               aria-label={`Tambah ${item.name}`}
-                              className="grid h-11 w-11 place-items-center rounded-control bg-eco-600 text-white transition-colors hover:bg-eco-700"
+                              className={cn("grid h-11 w-11 place-items-center rounded-control bg-eco-600 text-white hover:bg-eco-700", PRESS)}
                             >
                               <Plus size={16} />
                             </button>
@@ -364,7 +365,7 @@ export function MenuCatalog({
                           <button
                             type="button"
                             onClick={() => addItem(item.id)}
-                            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-eco-50 px-4 text-[15px] font-semibold text-eco-700 transition-colors hover:bg-eco-100"
+                            className={cn("inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-eco-50 px-4 text-[15px] font-semibold text-eco-700 hover:bg-eco-100", PRESS)}
                           >
                             <Plus size={16} />
                             Tambah

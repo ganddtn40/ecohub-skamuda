@@ -18,6 +18,23 @@ const VARIANTS: Record<ButtonVariant, string> = {
   outlineDark: "border border-white/40 text-white hover:bg-white/10",
 };
 
+/**
+ * Efek tekan, dipakai bersama oleh `Button` dan tombol yang dirakit langsung
+ * (pill filter dan tombol ikon di katalog) supaya rasanya seragam.
+ *
+ * `motion-safe:` bukan hiasan. Aturan di `globals.css` hanya memangkas durasi
+ * transisi, bukan membatalkan transformasinya — tanpa penanda itu, tombol tetap
+ * menyusut seketika meski pengguna sudah meminta gerak seminimal mungkin.
+ *
+ * `enabled:` menjaga tombol yang sedang nonaktif tidak ikut bergerak.
+ *
+ * Skalanya 0.97, bukan 0.95: pada tombol selebar kolom checkout, 5% berarti
+ * sekitar 19px dan terbaca sebagai tata letak yang bergeser, bukan sebagai
+ * tekanan.
+ */
+export const PRESS =
+  "transition duration-150 motion-safe:enabled:active:scale-[0.97]";
+
 /** Kelas tombol, dipakai bersama oleh <button> dan <Link>. */
 export function buttonStyles(
   variant: ButtonVariant = "primary",
@@ -26,7 +43,8 @@ export function buttonStyles(
 ): string {
   return cn(
     "inline-flex select-none items-center justify-center gap-2 rounded-full font-semibold",
-    "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 focus-visible:ring-offset-2",
+    PRESS,
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 focus-visible:ring-offset-2",
     "disabled:cursor-not-allowed disabled:opacity-50",
     SIZES[size],
     VARIANTS[variant],

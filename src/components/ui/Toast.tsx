@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 /**
@@ -23,8 +24,11 @@ import { X } from "lucide-react";
  * Maksimal tiga toast tampil bersamaan; yang tertua mengalah supaya penjual tidak
  * menumpuk antrean pengumuman yang sudah basi.
  *
- * Animasi masuknya masih CSS murni (`animate-fade-up`). Framer Motion baru masuk
- * di Fase C, dan di sanalah animasi keluarnya ditangani dengan `AnimatePresence`.
+ * Masuk dan keluarnya digerakkan Framer Motion. Yang benar-benar dibutuhkan dari
+ * sana adalah animasi keluarnya: toast yang hilang begitu saja membuat mata
+ * kehilangan jejak apakah pesannya sempat terbaca. `layout="position"` membuat
+ * sisa toast bergeser turun dengan tenang saat satu di antaranya pergi, tanpa
+ * ikut meregangkan teksnya.
  */
 
 interface ToastAction {
@@ -130,36 +134,43 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-5 pb-24 md:pb-6"
       >
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className="pointer-events-auto flex w-full max-w-md animate-fade-up items-center gap-2 rounded-card bg-ink px-4 py-3 text-white"
-          >
-            <span className="min-w-0 flex-1 text-[15px] leading-snug">{toast.message}</span>
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              layout="position"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="pointer-events-auto flex w-full max-w-md items-center gap-2 rounded-card bg-ink px-4 py-3 text-white"
+            >
+              <span className="min-w-0 flex-1 text-[15px] leading-snug">{toast.message}</span>
 
-            {toast.action ? (
+              {toast.action ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.action?.run();
+                    dismiss(toast.id);
+                  }}
+                  className="shrink-0 rounded-full px-3 py-1.5 text-[15px] font-semibold text-eco-200 transition-colors hover:bg-white/10"
+                >
+                  {toast.action.label}
+                </button>
+              ) : null}
+
               <button
                 type="button"
-                onClick={() => {
-                  toast.action?.run();
-                  dismiss(toast.id);
-                }}
-                className="shrink-0 rounded-full px-3 py-1.5 text-[15px] font-semibold text-eco-200 transition-colors hover:bg-white/10"
+                aria-label="Tutup notifikasi"
+                onClick={() => dismiss(toast.id)}
+                className="shrink-0 rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
               >
-                {toast.action.label}
+                <X size={16} />
               </button>
-            ) : null}
-
-            <button
-              type="button"
-              aria-label="Tutup notifikasi"
-              onClick={() => dismiss(toast.id)}
-              className="shrink-0 rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

@@ -1293,6 +1293,8 @@ Dua form lama ikut karena penambahan `method="post"` di Step 4.
 
 **Files:**
 - Modify: `package.json`
+- Modify: `package-lock.json`
+- Create: `src/components/ui/MotionProvider.tsx`
 - Modify: `src/app/layout.tsx`
 - Modify: `src/components/ui/Sheet.tsx`
 - Modify: `src/components/ui/ConfirmDialog.tsx`
@@ -1311,11 +1313,29 @@ Lalu `npm install framer-motion@^12`.
 Expected: instalasi berhasil dengan React 19 dan Next 15. Bila peer-dependency bentrok,
 ganti ke paket `motion` dan catat perubahan namanya di ringkasan commit.
 
+**Ukuran sebelum, diukur sungguhan.** `/kantin` 178 kB, `/kantin/menu` 177 kB, `/login` 178 kB,
+`/siswa/kantin` 191 kB, `/siswa/pesanan` 187 kB, `/petugas` 177 kB, `/papan-skor` 114 kB, dan
+bagian yang dipakai bersama semua rute 103 kB.
+
+Instalasi berhasil tanpa bentrok peer-dependency dengan React 19 dan Next 15 — versi yang
+terpasang 12.43.0 — jadi paket `motion` tidak perlu dan namanya tidak berubah. `npm audit`
+melaporkan sembilan kerentanan, tetapi semuanya sudah ada sebelum ini (dari `next`, `postcss`,
+`tailwindcss`, dan `chokidar`); framer-motion tidak menambah satu pun dan tidak muncul di
+daftar itu.
+
 - [ ] **Step 2: Pasang `MotionConfig` di root**
 
 Di `src/app/layout.tsx`, bungkus isinya dengan `<MotionConfig reducedMotion="user">`. Satu
 baris ini membuat seluruh animasi framer-motion menghormati setelan sistem, tanpa perlu
 memeriksa preferensi di tiap komponen.
+
+**Tidak bisa dipasang langsung di situ.** framer-motion 12.43.0 tidak menandai berkasnya
+sendiri dengan `"use client"` — diperiksa pada `node_modules/framer-motion/dist/es/index.mjs`,
+nol kemunculan. Diimpor dari layout root yang merupakan server component, konteksnya akan
+dijalankan di server. Karena itu pembungkusnya dibuat terpisah:
+`src/components/ui/MotionProvider.tsx`, satu komponen klien berisi satu baris `MotionConfig`,
+dan layout memanggil komponen itu. Perilakunya sama persis dengan yang direncanakan; yang
+berubah hanya tempat tinggalnya.
 
 - [ ] **Step 3: Beri animasi masuk dan keluar pada Sheet, ConfirmDialog, dan Toast**
 
@@ -1323,10 +1343,40 @@ Bungkus isinya dengan `AnimatePresence` dan animasi fade + scale kecil. Ini satu
 tempat framer-motion benar-benar mengalahkan CSS, karena butuh animasi keluar. Pastikan
 fokus dan Escape yang sudah ada tetap berjalan — uji dengan Tab dan Escape.
 
+**Kelas animasi CSS dilepas lebih dulu, dan itu bagian dari pekerjaannya.** Yang dihapus:
+`animate-fade-in` dari backdrop `Sheet` dan `ConfirmDialog`, `animate-sheet-up` dari panel
+`Sheet`, `animate-scale-in` dari panel `ConfirmDialog`, dan `animate-fade-up` dari `Toast`.
+Kalau dibiarkan, satu elemen akan dianimasikan dua kali oleh dua mesin yang berbeda, dan
+hasilnya bukan dua kali lebih halus melainkan saling menimpa: CSS mengubah `transform`,
+framer-motion juga, dan yang menang ditentukan waktu, bukan maksud. Kelas `animate-fade-up` di
+halaman-halaman lain sengaja **tetap** — di sana ia satu-satunya yang bekerja.
+
+`if (!open) return null;` di kedua komponen juga hilang, karena justru itulah yang menghalangi
+animasi keluar: elemen yang langsung dilepas tidak punya waktu untuk bergerak. Penjaga masuknya
+sekarang `{open ? … : null}` di dalam `AnimatePresence`, dan pembungkus terluarnya yang
+memudar sehingga backdrop dan panelnya pergi bersamaan.
+
 - [ ] **Step 4: Tambah efek tekan**
 
 `active:scale-95 transition-transform duration-150` pada tombol CTA di `Button`, tombol tambah
 menu di `MenuCatalog`, dan pill filter. Tombol yang sedang `disabled` tidak boleh bergerak.
+
+**Empat penyesuaian, semuanya karena versi yang tertulis di rencana tidak jalan.**
+
+1. `transition-transform` **tidak bisa** ditambahkan di samping `transition-colors` yang sudah
+   ada: keduanya menyetel `transition-property`, dan yang kalah tidak berlaku — salah satu dari
+   warna atau gerak akan hilang. Yang dipakai `transition` polos, yang mencakup dua-duanya.
+2. `motion-safe:` wajib ada. Aturan di `globals.css` hanya **memangkas durasi** transisi, bukan
+   membatalkan transformasinya; tanpa penanda itu, tombol tetap menyusut seketika meski
+   pengguna sudah meminta gerak seminimal mungkin. Karena `motion-safe:` sudah membatasi
+   dirinya pada "gerak diizinkan", tidak diperlukan penimpa kedua.
+3. `enabled:` menutup syarat "tombol yang sedang disabled tidak boleh bergerak".
+4. Skalanya 0.97, bukan 0.95. Pada tombol selebar kolom pembayaran di `/siswa/kantin`, 5%
+   berarti sekitar 19px — terbaca sebagai tata letak yang bergeser, bukan sebagai tekanan.
+
+Kelima tempatnya berbagi satu konstanta, `PRESS`, yang diekspor dari `Button.tsx` bersama
+`buttonStyles` — mengikuti pola `CONTROL` di `Input.tsx`, supaya tombol mentah di katalog tidak
+perlahan-lahan berbeda rasa dari tombol `Button`.
 
 - [ ] **Step 5: Verifikasi reduced motion**
 
@@ -1334,11 +1384,124 @@ Di peramban, aktifkan emulasi `prefers-reduced-motion: reduce`. Expected: tidak 
 perpindahan skala atau gerak yang tersisa selain perubahan warna; Sheet dan Toast tetap
 muncul dan hilang, hanya tanpa gerak.
 
+**Emulasinya tidak ada, tetapi keadaannya sudah begitu.** Harness ini tidak punya alat emulasi
+`prefers-reduced-motion`, jadi rencananya batal. Sebagai gantinya diperiksa dulu keadaan
+peramban: ternyata ia **sudah** melaporkan reduce — `matchMedia("(prefers-reduced-motion:
+reduce)").matches === true`, dan `transition-duration` yang dihitung peramban untuk `body`
+adalah `1e-06s`, yaitu aturan global di `globals.css` memang sedang berlaku. Jadi yang
+diinginkan Step 5 memang keadaan yang sedang berjalan; tidak perlu disetel.
+
+**Yang terukur pada Sheet, keadaan reduce.** Panel dibuka, lalu diambil seri sampelnya:
+
+| t | opacity pembungkus | transform panel |
+|---|---|---|
+| 48 ms | 0 | `matrix(0.98, 0, 0, 0.98, 0, 24)` |
+| 53 ms | 0.087 | `none` |
+| 65 ms | 0.228 | `none` |
+| 81 ms | 0.362 | `none` |
+| 1084 ms | 1 | `none` |
+
+Bacanya: nilai awal `scale 0.98` + `y 24` tetap **dipasang**, lalu transformnya dilepas dalam
+satu frame — tidak dianimasikan. Sementara opacitynya tetap berjalan mulus sampai 1. Itu
+perilaku `reducedMotion="user"` yang diminta: gerak transformasi dilewati, perubahan opacity
+tetap ada. Keluar pun sama: `matrix(0.98, 0, 0, 0.98, 0, 20)` dipasang seketika, opacity
+1 → 0.91 → 0.77 → 0.0007 → 0 pada t≈235 ms, dan elemennya baru dilepas t≈251 ms — jadi Sheet
+tetap muncul dan hilang, hanya tanpa gerak, persis kalimat di Expected.
+
+**Yang juga terbukti, bukan diasumsikan.** Escape menutup panel, dan fokus sudah berada di
+dalam panel sejak frame pertama (`panel.contains(document.activeElement)`). DOM yang hidup tidak
+lagi memuat satu pun kelas animasi lama (`animate-sheet-up`, `animate-fade-in`, `animate-scale-
+in`, `animate-fade-up`) — pemisahan dua mesin animasi itu benar-benar terjadi, bukan hanya
+niat. Untuk efek tekan, aturan CSS-nya dibaca langsung dari CSSOM dan hanya ada satu:
+`.motion-safe\:enabled\:active\:scale-\[0\.97\]:active:enabled`, hidup di dalam
+`@media (prefers-reduced-motion: no-preference)`. Karena syaratnya ada di dalam media query itu,
+keadaan reduce tidak pernah menyentuhnya — inilah alasan `motion-safe:` tidak bisa dilepas.
+Tombolnya juga benar: `transition-property` yang dihitung peramban memuat `transform`, dan yang
+`disabled` tidak bergerak karena ada `:enabled`.
+
+**Jalur geraknya diperiksa dengan menyimpangkan satu baris, lalu dikembalikan.**
+`reducedMotion="user"` di `MotionProvider` diubah sementara menjadi `"never"`, dan pada keadaan
+yang sama persis panelnya dianimasikan turun dengan mulus: `scale` 1 → 0.98 dan `y` 0 → 20 px
+selama ±264 ms, dengan elemennya tetap terpasang sampai animasinya selesai dan baru dilepas pada
+t≈280 ms; kurva `[0.22, 1, 0.36, 1]` terlihat dari `y` yang sudah 7,7 px pada t=47 ms lalu
+merangkak ke 20 px. Sesudah itu baris dikembalikan ke `"user"` dan diperiksa ulang: hanya tinggal
+`"user"` di seluruh `src`, dan pemeriksaan CSSOM di atas diulang pada keadaan reduce. Tanpa
+langkah ini yang terbukti hanyalah "atraksi transformnya benar-benar dipanggil"; dengan langkah
+ini terbukti bahwa transformnya memang dianimasikan ketika gerak diizinkan.
+
+**Yang tidak bisa diverifikasi dengan peramban, dan sebabnya.** Dua hal:
+
+1. **Toast.** Satu-satunya yang memunculkannya adalah pesanan baru di papan penjual, dan itu
+   butuh sesi siswa dan sesi penjual hidup bersamaan — di harness ini keduanya berbagi satu sesi
+   kue, jadi tidak mungkin.
+2. **ConfirmDialog.** Dipakai hanya untuk menolak pesanan, jadi butuh pesanan yang ada; keadaan
+   demo memang nol pesanan. Menyisipkan pesanan palsu lewat SQL bisa, tetapi hasilnya mengubah
+   data produksi hanya untuk memeriksa animasi yang pola-nya sudah terbukti pada Sheet.
+
+Keduanya memakai pola `AnimatePresence` + `motion.div` yang sama dengan Sheet, yang sudah
+diperiksa secara perilaku. Sebagai ganti bukti perilaku, `ConfirmDialog` dibaca baris per baris:
+`pending` memang menutup jalan keluar — Escape (baris 48), latar (baris 74), dan kedua tombolnya
+(`disabled={pending}`) — dan kunci gulir badan halaman dikembalikan lewat pembersihan efek.
+
+**Satu temuan lingkungan, dicatat supaya tidak terulang sebagai salah paham.** Di tengah Task 11
+tab peramban berhenti dikomposit: tangkapan layar gagal ("Screenshot needs a visible tab") dan
+`requestAnimationFrame` tidak pernah dipanggil sama sekali. Akibatnya konten yang di-stream Next
+tetap tertahan di `<div hidden id="S:0">` — hanya kepala halaman yang terlihat — dan saya sempat
+menduga itu masalah aplikasi. Bukan: penyebabnya frame, dan tanpa frame tidak ada yang bergerak.
+Buktinya halaman yang sama dengan kode Task 11 yang sama sudah pernah termuat penuh dan bisa
+diklik di sesi ini, dan HTML dari servernya lengkap (`$RC("B:0","S:0")` ada di ekor berkas).
+Ini juga menjelaskan artifact "form React yang belum diklaim" yang dulu saya catat di Task 10 dan
+sempat saya kira salah server dev — pemicunya tab yang tidak terlihat, bukan build.
+
 - [ ] **Step 6: Ukur bundel sesudah dan putuskan**
 
 Run: `npm run build`. Bandingkan dengan Step 1. Bila kenaikannya berarti pada `/login` atau
 `/siswa/kantin`, muat dinamis komponen yang bukan kebutuhan layar pertama
 (`next/dynamic`), lalu ukur ulang. Catat angkanya di ringkasan commit.
+
+Diukur dua kali: sekali pada pohon sesudah perubahan, sekali lagi pada pohon **sebelum**
+perubahan dengan perubahan Task 11 disimpankan sementara, supaya pembandingnya build yang sama
+dan bukan angka dari ingatan.
+
+| Rute | Sebelum | Sesudah | Selisih |
+|---|---|---|---|
+| `/login` | 178 kB | 178 kB | **0** |
+| `/register` | 179 kB | 179 kB | **0** |
+| `/lupa-password` | 178 kB | 178 kB | **0** |
+| `/reset-password` | 179 kB | 179 kB | **0** |
+| `/` | 114 kB | 114 kB | 0 |
+| `/papan-skor` | 114 kB | 114 kB | 0 |
+| `/siswa/qr` | 110 kB | 110 kB | 0 |
+| `/kantin/scan` | 185 kB | 185 kB | 0 |
+| `/petugas` | 177 kB | 177 kB | 0 |
+| `/kantin` | 178 kB | 220 kB | +42 |
+| `/kantin/menu` | 177 kB | 218 kB | +41 |
+| `/siswa/kantin` | 191 kB | 232 kB | +41 |
+| `/siswa/pesanan` | 187 kB | 229 kB | +42 |
+| bersama semua rute | 103 kB | 103 kB | 0 |
+
+Angka itu diperiksa ulang di tingkat berkas, bukan cuma di tabel: satu chunk berisi
+framer-motion, `100-*.js`, 125 kB mentah (sekitar 42 kB setelah gzip), dan chunk itu hanya
+muncul di daftar milik `(app)/layout` dan keempat rute di atas. Rute publik — termasuk seluruh
+halaman auth yang jadi pokok Task 8 dan 9 — tidak menyentuhnya sama sekali. Sebelum perubahan,
+tidak ada satu pun chunk yang memuatnya.
+
+**Keputusannya: impor tetap statis.** Alasannya bukan "42 kB itu kecil", melainkan bahwa
+memuat dinamis sebagian saja tidak menghapus apa pun: ketiga komponen mengimpor framer-motion,
+jadi selama satu di antaranya masih statis, chunk-nya tetap ikut masuk ke rute itu. Yang
+menghapusnya berarti membuat `Sheet`, `ConfirmDialog`, **dan** `Toast` dimuat dinamis di semua
+tempat pemakaiannya, masing-masing dengan keadaan tunggu sendiri — dan untuk `Sheet`, chunk-nya
+baru diminta ketika panel pertama kali dibuka, sehingga pembukaan pertama justru berisiko
+tersendat. Menukar 42 kB di jalur kritis dengan tersendat di interaksi inti bukan pertukaran
+yang jelas menang.
+
+**Satu hal yang tidak selesai dijelaskan, dan lebih baik dicatat daripada dibulatkan.** Tabel
+Next menunjukkan `/petugas` tidak berubah, padahal daftar chunk milik `(app)/layout` — yang
+dimuat setiap rute di dalamnya — juga bertambah chunk yang sama. Artinya papan petugas
+kemungkinan tetap mengambil 42 kB itu saat halaman hidup, hanya tidak terhitung sebagai First
+Load JS. Saya tidak berhasil memastikan mana yang benar tanpa menjalankan server produksi
+dengan sesi sungguhan. Kalau nanti terasa berat di jaringan sekolah, inilah tempat pertama
+yang perlu dilihat, dan itulah saatnya impor dinamis dibayar.
 
 - [ ] **Step 7: Commit**
 
