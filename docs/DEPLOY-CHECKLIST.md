@@ -52,6 +52,28 @@ node --env-file=.env.local scripts/db.mjs supabase/migrations/latest_update.sql
 
 Yang harus terlihat: `OK` di akhir, tanpa satu baris `ERROR`.
 
+### Kurs poin: satu langkah tambahan untuk database yang sudah terisi
+
+`supabase/migrations/005_kurs_poin.sql` menurunkan kurs dari 1 poin = Rp10
+menjadi **1 poin = Rp5**, supaya potongan voucher yang ditanggung penjual
+kantin tidak sebesar sebelumnya. Isinya hanya dua `update` — ke `voucher_tiers`
+dan `menu_items` — tanpa skema dan tanpa nilai enum, jadi aman ditempel utuh
+sebagai satu transaksi. Berkas ini idempoten, dan di database yang di-seed
+ulang setelah 18 Oktober 2026 ia tidak mengubah apa pun (`seed.sql` sudah
+memakai kurs Rp5).
+
+1. **New query**, tempel seluruh isi `005_kurs_poin.sql`, klik **Run**.
+2. Baris terakhir berbunyi `RINGKASAN` dengan nilai **`SESUAI (kurs Rp5)`**.
+   Dua baris pemeriksaan di atasnya harus berbunyi `"tidak_sesuai": 0`.
+
+Perkiraan hasilnya: Nasi Ayam Bakar Rp15.000 = 3.000 poin (dulu 1.500 poin),
+dan voucher 500 P = potongan Rp2.500 (dulu Rp5.000). Imbalan menyetor sampah
+per kg sengaja tidak diubah — penurunannya sudah otomatis terasa di nilai
+rupiahnya.
+
+Jangan jalankan berkas ini berkali-kali dengan harapan hasilnya bertambah;
+kursnya sudah pasti, dan menjalankannya lagi hanya menulis angka yang sama.
+
 ---
 
 ## 2. Email reset kata sandi tidak bisa terkirim (penghalang produksi)

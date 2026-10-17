@@ -46,10 +46,12 @@ on conflict (code) do update
   set label = excluded.label, unit_label = excluded.unit_label,
       points_per_kg = excluded.points_per_kg, is_active = excluded.is_active;
 
+-- Kurs: 1 poin = Rp5 (lihat migrations/005_kurs_poin.sql). Potongan voucher
+-- ditanggung penjual kantin, jadi kursnya sengaja tidak 1:1 dengan rupiah.
 insert into public.voucher_tiers (points_cost, discount_idr, label, is_active) values
-  (500,  5000,  'Hemat',   true),
-  (1200, 12000, 'Spesial', true),
-  (2500, 25000, 'Pesta',   true)
+  (500,  2500,  'Hemat',   true),
+  (1200, 6000,  'Spesial', true),
+  (2500, 12500, 'Pesta',   true)
 on conflict (points_cost) do update
   set discount_idr = excluded.discount_idr, label = excluded.label, is_active = excluded.is_active;
 
@@ -128,31 +130,31 @@ select p.id, 'Kantin Sehat', 'Menu sehat, gorengan, dan jus buah segar.', true
 from public.profiles p where p.id = (select id from auth.users where email = 'kantin.sehat@skamuda.sch.id')
   and not exists (select 1 from public.canteen_stands s where s.stand_name = 'Kantin Sehat');
 
--- Menu Kantin Berkah
+-- Menu Kantin Berkah (harga poin = harga rupiah / 5)
 insert into public.menu_items (stand_id, name, price_idr, points_price, category, is_available)
 select s.id, v.name, v.price_idr, v.points_price, v.category, true
 from public.canteen_stands s
 cross join (values
-  ('Nasi Ayam Bakar',      15000, 1500, 'Makanan'),
-  ('Nasi Telur Balado',    10000, 1000, 'Makanan'),
-  ('Mie Goreng Spesial',   12000, 1200, 'Makanan'),
-  ('Tahu Tempe Penyet',     8000,  800, 'Makanan'),
-  ('Es Teh Manis',          4000,  400, 'Minuman'),
-  ('Air Mineral',           3000,  300, 'Minuman')
+  ('Nasi Ayam Bakar',      15000, 3000, 'Makanan'),
+  ('Nasi Telur Balado',    10000, 2000, 'Makanan'),
+  ('Mie Goreng Spesial',   12000, 2400, 'Makanan'),
+  ('Tahu Tempe Penyet',     8000, 1600, 'Makanan'),
+  ('Es Teh Manis',          4000,  800, 'Minuman'),
+  ('Air Mineral',           3000,  600, 'Minuman')
 ) as v(name, price_idr, points_price, category)
 where s.stand_name = 'Kantin Berkah'
   and not exists (select 1 from public.menu_items m where m.stand_id = s.id and m.name = v.name);
 
--- Menu Kantin Sehat
+-- Menu Kantin Sehat (harga poin = harga rupiah / 5)
 insert into public.menu_items (stand_id, name, price_idr, points_price, category, is_available)
 select s.id, v.name, v.price_idr, v.points_price, v.category, true
 from public.canteen_stands s
 cross join (values
-  ('Salad Buah Segar',     12000, 1200, 'Sehat'),
-  ('Nasi Ayam Kukus',      14000, 1400, 'Sehat'),
-  ('Jus Alpukat',           9000,  900, 'Minuman'),
-  ('Pisang Goreng Crispy',  6000,  600, 'Snack'),
-  ('Roti Bakar Madu',       7000,  700, 'Snack')
+  ('Salad Buah Segar',     12000, 2400, 'Sehat'),
+  ('Nasi Ayam Kukus',      14000, 2800, 'Sehat'),
+  ('Jus Alpukat',           9000, 1800, 'Minuman'),
+  ('Pisang Goreng Crispy',  6000, 1200, 'Snack'),
+  ('Roti Bakar Madu',       7000, 1400, 'Snack')
 ) as v(name, price_idr, points_price, category)
 where s.stand_name = 'Kantin Sehat'
   and not exists (select 1 from public.menu_items m where m.stand_id = s.id and m.name = v.name);

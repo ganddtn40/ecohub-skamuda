@@ -58,11 +58,32 @@ dikoreksi.
 | Topik | Keputusan | Alasan |
 |---|---|---|
 | Model bayar di checkout | Voucher parsial tetap ada, **ditambah** opsi bayar penuh dengan poin | Opsi poin penuh Anda minta eksplisit; menghapus voucher tidak pernah diminta, dan instruksi lama adalah mempertahankan fitur yang ada |
-| Kurs poin | 1 poin = Rp10, memakai `menu_items.points_price` yang sudah terisi | Datanya sudah konsisten: Nasi Ayam Bakar Rp15.000 = 1.500 poin, dan voucher 500 P = Rp5.000 |
+| Kurs poin | **1 poin = Rp5** (revisi 18 Okt 2026; semula Rp10) | Potongan voucher ditanggung penjual kantin dan aplikasi ini tidak punya mekanisme penggantian, jadi kurs 1:1 membuat kerugiannya terlalu besar |
 | "Uang Pas" | Bayar tunai pas di counter saat mengambil, tanpa kembalian | Pembacaan saya atas judul Opsi B; bukan pembayaran di muka |
 | Nilai enum `pending` | Dipensiunkan (tetap ada di tipe, tidak dipakai lagi) | Postgres tidak bisa menghapus nilai enum tanpa membongkar tipe; risikonya tidak sebanding pada DB live |
 | `unclaimed` dari mana | Hanya dari `ready_for_pickup` | Siswa tidak boleh dicap "tidak diambil" untuk makanan yang belum pernah dinyatakan siap oleh penjual |
 | Lokasi lupa password | Halaman `/lupa-password`, bukan modal | Konsisten dengan shell auth yang ada dan bebas dari urusan fokus/escape modal |
+
+### Revisi kurs poin (18 Oktober 2026)
+
+Kurs awal Rp10 dipilih karena datanya sudah terisi 1:1 dan tidak ada alasan
+untuk mengubahnya saat itu. Setelah dipakai, alasan itu ternyata kurang:
+potongan voucher ditanggung penjual kantin, sehingga voucher 500 P berarti
+penjual menerima Rp5.000 lebih sedikit dari harga menunya, dan di mode bayar
+penuh dengan poin siswa tidak membayar tunai sama sekali.
+
+Kurs diturunkan menjadi **Rp5**, murni sebagai perubahan data:
+
+- `voucher_tiers.discount_idr` = `points_cost × 5` (500 P → Rp2.500).
+- `menu_items.points_price` = `round(price_idr / 5)` untuk menu yang memang
+  menerima poin; menu ber-`points_price` NULL dibiarkan NULL supaya aturan
+  `PZ004` tidak bocor.
+- `waste_item_types.points_per_kg` sengaja tidak diubah.
+
+Berkasnya `supabase/migrations/005_kurs_poin.sql` (idempoten, punya bagian
+pemeriksaan sendiri), dan `seed.sql` sudah memakai kurs baru untuk instalasi
+baru. Tidak ada kode aplikasi yang menyimpan kurs ini; seluruh tampilan
+membacanya dari database, jadi perubahan ini tidak menuntut build ulang.
 
 ## 4. Non-tujuan (YAGNI)
 
