@@ -60,11 +60,11 @@ export function PublicFooter() {
   return (
     <footer className="field on-field bg-eco-900 text-white">
       <div className="page-x py-14 sm:py-16">
-        <div className="reveal">
+        <div data-reveal>
           <BrandMark tone="light" />
         </div>
 
-        <nav aria-label="Tautan kaki halaman" className="reveal mt-8" data-i="1">
+        <nav aria-label="Tautan kaki halaman" className="mt-8" data-reveal>
           <ul className="flex flex-wrap gap-x-6 gap-y-3">
             {PLACES.map((place) => (
               <li key={place.label}>
@@ -79,7 +79,7 @@ export function PublicFooter() {
           </ul>
         </nav>
 
-        <div className="reveal mt-12" data-i="2">
+        <div className="mt-12" data-reveal>
           <p className="text-small text-white/80">
             Ekosistem digital SMKN 1 Murung Pudak, Kabupaten Tabalong, Kalimantan Selatan.
           </p>

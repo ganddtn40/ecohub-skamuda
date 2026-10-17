@@ -5,6 +5,7 @@ import { ImpactStatsGrid } from "@/components/leaderboard/ImpactStatsGrid";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicNav, type PublicNavLink } from "@/components/public/PublicNav";
 import { LoopMotif } from "@/components/art/LoopMotif";
+import { RevealScope } from "@/components/motion/RevealScope";
 import { createClient } from "@/lib/supabase/server";
 import { unwrap } from "@/lib/query";
 import { formatNumber } from "@/lib/format";
@@ -67,7 +68,7 @@ export default async function LeaderboardPage() {
   const materials = wasteTypes.filter((type) => MATERIAL_PHOTO[type.code]).slice(0, 4);
 
   return (
-    <div className="min-h-dvh bg-mint">
+    <RevealScope className="min-h-dvh bg-mint">
       {/* Bab 1 - bidang terdalam. Angka dampak memimpin, bukan dihias dulu. */}
       <section className="field on-field bg-eco-900 text-white">
         <LoopMotif className="pointer-events-none absolute -right-[34%] -top-[30%] h-[34rem] w-[34rem] text-eco-600/30 sm:-right-[18%] lg:h-[44rem] lg:w-[44rem]" />
@@ -130,28 +131,24 @@ export default async function LeaderboardPage() {
           <div className="page-x relative py-16 sm:py-20">
             <h2
               id="material"
-              className={`${ENTER} text-chapter font-extrabold text-ink`}
-              style={delay(0)}
+              className="text-chapter font-extrabold text-ink"
+              data-reveal
             >
               Yang ditimbang di sini
             </h2>
             <p
-              className={`${ENTER} mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-soft`}
-              style={delay(80)}
+              className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-soft"
+              data-reveal
             >
               Lima jenis material dicatat sistem. Empat di antaranya, beserta nilai poin yang
               berlaku sekarang, ada di bawah ini.
             </p>
 
             <ul className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-4">
-              {materials.map((type, index) => {
+              {materials.map((type) => {
                 const photo = MATERIAL_PHOTO[type.code];
                 return (
-                  <li
-                    key={type.code}
-                    className={ENTER}
-                    style={delay(160 + index * 90)}
-                  >
+                  <li key={type.code} data-reveal>
                     <figure>
                       <div className="relative aspect-[4/3] overflow-hidden rounded-card">
                         <Image
@@ -180,12 +177,14 @@ export default async function LeaderboardPage() {
       {/* Bab 3 - bidang kerja: dampak, lalu klasemen. Satu kolom, satu nada. */}
       <section className="field bg-mint" aria-labelledby="klasemen">
         <div className="page-x py-16 sm:py-20">
-          <ImpactStatsGrid stats={stats} />
+          <div data-reveal>
+            <ImpactStatsGrid stats={stats} />
+          </div>
 
-          <h2 id="klasemen" className="mt-16 text-chapter font-extrabold text-ink">
+          <h2 id="klasemen" className="mt-16 text-chapter font-extrabold text-ink" data-reveal>
             Klasemen kelas
           </h2>
-          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-soft">
+          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-reveal>
             Saring per jurusan untuk melihat kelas mana yang paling banyak mengembalikan
             materialnya.
           </p>
@@ -197,6 +196,6 @@ export default async function LeaderboardPage() {
       </section>
 
       <PublicFooter />
-    </div>
+    </RevealScope>
   );
 }

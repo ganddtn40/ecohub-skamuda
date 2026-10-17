@@ -75,23 +75,6 @@
 }
 
 /*
- * Pintu masuk tiap bagian halaman: judul, lalu teks, lalu gambar.
- * Memakai animasi berbasis scroll CSS sehingga tanpa JavaScript pun konten
- * tetap terlihat penuh (tidak pernah tersembunyi bila skrip gagal), dan
- * peramban lama hanya kehilangan geraknya.
- */
-@keyframes reveal-rise {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/*
  * Perangkat lemah kehilangan hiasannya lebih dulu.
  *
  * Sapuan kerangka dan motif yang melayang adalah hiasan: tidak satu pun
@@ -109,24 +92,17 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: reveal-rise both;
-      animation-timeline: view();
-      animation-range: entry 6% cover 26%;
-    }
-    .reveal[data-i="1"] {
-      animation-range: entry 13% cover 33%;
-    }
-    .reveal[data-i="2"] {
-      animation-range: entry 20% cover 40%;
-    }
-    .reveal[data-i="3"] {
-      animation-range: entry 27% cover 47%;
-    }
-  }
-}
+/*
+ * Reveal saat digulir kini milik GSAP (`src/components/motion/RevealScope.tsx`).
+ *
+ * Sampai Task 12 milestone sebelumnya, bagian ini memegang aturan
+ * `animation-timeline: view()` untuk `.reveal`. Aturan itu dihapus, bukan
+ * dilupakan: satu elemen tidak boleh digerakkan dua mesin pada properti yang
+ * sama, dan `transform`/`opacity` elemen itu kini dipegang GSAP. Keuntungan
+ * yang dulu jadi alasan memilihnya — konten tetap terlihat tanpa JavaScript —
+ * tetap ada, karena GSAP memakai bentuk `from()` dan tidak pernah menyembunyikan
+ * elemennya lebih dulu.
+ */
 
 @media (prefers-reduced-motion: reduce) {
   *,

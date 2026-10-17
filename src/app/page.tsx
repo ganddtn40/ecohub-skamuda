@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { LoopMotif } from "@/components/art/LoopMotif";
+import { RevealScope } from "@/components/motion/RevealScope";
 import { HeroDevice } from "@/components/public/HeroDevice";
 import { PointSimulator } from "@/components/public/PointSimulator";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -83,7 +84,7 @@ export default async function HomePage() {
   const hasDeposits = Number(stats.deposits) > 0;
 
   return (
-    <div className="min-h-dvh bg-mint">
+    <RevealScope className="min-h-dvh bg-mint">
       {/* Bab 1 - hero, bidang terdalam. Bentuk termotif dipotong tepi kanan. */}
       <section className="field on-field bg-eco-900 text-white">
         <LoopMotif className="pointer-events-none absolute -right-[38%] -top-[24%] h-[40rem] w-[40rem] text-eco-600/35 sm:-right-[20%] sm:h-[46rem] sm:w-[46rem] lg:top-1/2 lg:h-[52rem] lg:w-[52rem] lg:-translate-y-1/2 lg:translate-x-[20%]" />
@@ -178,7 +179,7 @@ export default async function HomePage() {
               <span className="text-item font-bold text-eco-700">kg</span>
             </h2>
 
-            <p className="reveal mt-8 max-w-xl text-[17px] leading-relaxed text-ink-soft">
+            <p className="mt-8 max-w-xl text-[17px] leading-relaxed text-ink-soft" data-reveal>
               Itu dampak yang sudah tercatat: total sampah yang ditimbang dan diverifikasi petugas
               sejak sistem ini dipakai.{" "}
               {hasDeposits
@@ -187,19 +188,19 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-3">
-              <div className="reveal">
+              <div data-reveal>
                 <p className="tnum text-[26px] font-bold text-ink">
                   {formatNumber(stats.total_points)}
                 </p>
                 <p className="mt-1.5 text-small font-semibold text-muted">Poin beredar</p>
               </div>
-              <div className="reveal" data-i="1">
+              <div data-reveal>
                 <p className="tnum text-[26px] font-bold text-ink">
                   {formatNumber(stats.co2e_kg, 1)} kg
                 </p>
                 <p className="mt-1.5 text-small font-semibold text-muted">Estimasi reduksi CO2e</p>
               </div>
-              <div className="reveal" data-i="2">
+              <div data-reveal>
                 <p className="tnum text-[26px] font-bold text-ink">
                   {formatNumber(stats.deposits)}
                 </p>
@@ -207,13 +208,13 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <p className="reveal mt-8 max-w-xl text-small leading-relaxed text-muted" data-i="2">
+            <p className="mt-8 max-w-xl text-small leading-relaxed text-muted" data-reveal>
               Estimasi CO2e memakai satu faktor saja: {formatNumber(CO2E_FACTOR_PER_KG, 1)} kg CO2e
               per kg sampah.
             </p>
           </div>
 
-          <div className="reveal" data-i="1">
+          <div data-reveal>
             <div className="relative aspect-[4/5] overflow-hidden rounded-card">
               <Image
                 src="/images/photos/sempervivum-montanum-close-up.jpg"
@@ -241,16 +242,16 @@ export default async function HomePage() {
           style={{ animationDelay: "-3s" }}
         />
         <div className="page-x py-16 sm:py-20">
-          <h2 id="modul" className="reveal text-chapter max-w-[18ch] font-extrabold text-ink">
+          <h2 id="modul" className="text-chapter max-w-[18ch] font-extrabold text-ink" data-reveal>
             Dua modul, satu saldo
           </h2>
-          <p className="reveal mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-i="1">
+          <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-reveal>
             Poin dari sampah dipakai langsung di kantin. Tidak ada saldo terpisah dan tidak ada
             pencatatan manual.
           </p>
 
           <article className="mt-14 grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-            <div className="reveal order-2 lg:order-1">
+            <div className="order-2 lg:order-1" data-reveal>
               <h3 className="text-item font-extrabold text-ink">Bank Sampah berbasis poin</h3>
               <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-soft">
                 Siswa menyetorkan sampah yang sudah dipilah, petugas menimbangnya, lalu saldo poin
@@ -262,8 +263,7 @@ export default async function HomePage() {
                 {wasteTypes.map((type, index) => (
                   <div
                     key={type.code}
-                    className="reveal flex items-baseline justify-between gap-6"
-                    data-i={index || undefined}
+                    className="flex items-baseline justify-between gap-6" data-reveal
                   >
                     <dt className="text-[17px] text-ink-soft">{type.label}</dt>
                     <dd className="tnum text-[17px] font-bold text-eco-700">
@@ -274,7 +274,7 @@ export default async function HomePage() {
               </dl>
             </div>
 
-            <div className="reveal order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none" data-i="1">
+            <div className="order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none" data-reveal>
               <div className="rounded-full bg-eco-100/70 p-6 sm:p-10">
                 <Image
                   src="/images/waste-bank.svg"
@@ -287,7 +287,7 @@ export default async function HomePage() {
             </div>
           </article>
 
-          <div className="reveal mt-14 grid gap-8 sm:grid-cols-2">
+          <div className="mt-14 grid gap-8 sm:grid-cols-2" data-reveal>
             <figure>
               <div className="relative aspect-[3/2] overflow-hidden rounded-card">
                 <Image
@@ -319,7 +319,7 @@ export default async function HomePage() {
           </div>
 
           <article className="mt-16 grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
-            <div className="reveal mx-auto w-full max-w-md lg:max-w-none">
+            <div className="mx-auto w-full max-w-md lg:max-w-none" data-reveal>
               <div className="rounded-full bg-white p-6 sm:p-10">
                 <Image
                   src="/images/canteen-bowl.svg"
@@ -331,7 +331,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="reveal" data-i="1">
+            <div data-reveal>
               <h3 className="text-item font-extrabold text-ink">Pre-Order Kantin Pintar</h3>
               <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-soft">
                 Pesanan dibuat sebelum istirahat dan dipisah per slot pengambilan, supaya tidak
@@ -381,15 +381,15 @@ export default async function HomePage() {
       {/* Bab 4 - alat hitung, satu-satunya hal interaktif di halaman ini */}
       <section className="field bg-white" aria-labelledby="hitung">
         <div className="page-x py-16 sm:py-20">
-          <h2 id="hitung" className="reveal text-chapter max-w-[22ch] font-extrabold text-ink">
+          <h2 id="hitung" className="text-chapter max-w-[22ch] font-extrabold text-ink" data-reveal>
             Hitung sendiri sebelum menyetor
           </h2>
-          <p className="reveal mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-i="1">
+          <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-soft" data-reveal>
             Pilih jenis sampah dan beratnya. Tarif, voucher, dan harga menu di bawah ini dibaca
             langsung dari data kantin yang sedang berjalan.
           </p>
 
-          <div className="reveal mt-12" data-i="2">
+          <div className="mt-12" data-reveal>
             <PointSimulator
               wasteTypes={wasteTypes}
               voucherTiers={voucherTiers}
@@ -402,7 +402,7 @@ export default async function HomePage() {
       {/* Bab 5 - cara kerja, sebagai daftar bertipe besar, bukan kartu kembar */}
       <section className="field bg-eco-50" aria-labelledby="cara-kerja">
         <div className="page-x grid gap-12 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div className="reveal">
+          <div data-reveal>
             <LoopMotif
               strokeWidth={34}
               className="h-16 w-16 text-eco-600"
@@ -418,7 +418,7 @@ export default async function HomePage() {
 
           <ol className="space-y-10">
             {STEPS.map((step, index) => (
-              <li key={step.title} className="reveal grid gap-2 sm:grid-cols-[auto_1fr] sm:gap-8" data-i={index || undefined}>
+              <li key={step.title} className="grid gap-2 sm:grid-cols-[auto_1fr] sm:gap-8" data-reveal>
                 <span className="tnum text-[26px] font-extrabold leading-none text-eco-300">
                   {index + 1}
                 </span>
@@ -445,16 +445,16 @@ export default async function HomePage() {
           style={{ animationDelay: "-6s" }}
         />
         <div className="page-x py-16 sm:py-20">
-          <h2 id="klasemen" className="reveal text-chapter max-w-[16ch] font-extrabold">
+          <h2 id="klasemen" className="text-chapter max-w-[16ch] font-extrabold" data-reveal>
             Setiap kilogram dihitung
           </h2>
-          <p className="reveal mt-5 max-w-xl text-[17px] leading-relaxed text-white/75" data-i="1">
+          <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-white/75" data-reveal>
             Klasemen diurutkan dari total kilogram yang sudah diverifikasi, jadi satu kelas bisa
             disalip dengan setoran yang lebih berat, bukan dengan jumlah setoran yang lebih banyak.
           </p>
 
           {top.length === 0 ? (
-            <p className="reveal mt-12 max-w-xl text-[17px] leading-relaxed text-white/80">
+            <p className="mt-12 max-w-xl text-[17px] leading-relaxed text-white/80" data-reveal>
               Belum ada setoran yang tercatat. Klasemen akan terisi begitu petugas memverifikasi
               setoran pertama.
             </p>
@@ -463,8 +463,7 @@ export default async function HomePage() {
               {top.map((row, index) => (
                 <li
                   key={row.class_name}
-                  className="reveal flex items-center gap-5 sm:gap-8"
-                  data-i={index || undefined}
+                  className="flex items-center gap-5 sm:gap-8" data-reveal
                 >
                   <span className="tnum w-7 shrink-0 text-[26px] font-extrabold leading-none text-white/45">
                     {index + 1}
@@ -502,12 +501,11 @@ export default async function HomePage() {
           aria-label="Daftar akun siswa SKAMUDA EcoHub"
           className="page-x group block py-16 text-center transition-colors hover:bg-eco-700 sm:py-20"
         >
-          <span className="reveal block text-[17px] font-semibold text-white/85">
+          <span className="block text-[17px] font-semibold text-white/85" data-reveal>
             Gratis untuk siswa SMKN 1 Murung Pudak. Cukup satu email.
           </span>
           <span
-            className="reveal mt-4 block text-[clamp(3.5rem,14vw,11rem)] font-extrabold leading-[0.9] tracking-[-0.04em]"
-            data-i="1"
+            className="mt-4 block text-[clamp(3.5rem,14vw,11rem)] font-extrabold leading-[0.9] tracking-[-0.04em]" data-reveal
           >
             Daftar
             <ArrowRight
@@ -519,6 +517,6 @@ export default async function HomePage() {
       </section>
 
       <PublicFooter />
-    </div>
+    </RevealScope>
   );
 }

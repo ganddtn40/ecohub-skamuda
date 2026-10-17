@@ -48,6 +48,21 @@ export function loadGsap(): Promise<Gsap> {
 }
 
 /**
+ * Kelas `ScrollTrigger`, untuk komponen yang butuh memanggilnya langsung
+ * (`ScrollTrigger.batch`). Dipisah dari `useGsap()` karena GSAP inti dan
+ * pluginnya dua modul yang berbeda, dan pemanggil yang cuma butuh menganimasikan
+ * angka tidak perlu ikut memuat ScrollTrigger.
+ *
+ * Impor keduanya mengambil modul yang sudah ada di cache setelah `loadGsap()`
+ * berjalan; tidak ada berkas yang diunduh dua kali.
+ */
+export type ScrollTriggerApi = typeof import("gsap/ScrollTrigger").ScrollTrigger;
+
+export function loadScrollTrigger(): Promise<ScrollTriggerApi> {
+  return import("gsap/ScrollTrigger").then((mod) => mod.ScrollTrigger);
+}
+
+/**
  * Mesin GSAP untuk komponen ini, atau `null`.
  *
  * `null` selama potongannya masih diambil, dan `null` selamanya di perangkat
