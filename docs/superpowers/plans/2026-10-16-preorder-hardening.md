@@ -1720,16 +1720,49 @@ lewat jalur sistem (`app.allow_profile_system_update`), lalu dipulihkan ke 0 P. 
 diperiksa langsung, bukan diasumsikan: 0 P, 0.00 kg, `unclaimed_orders_count = 0`,
 `preorder_blocked_until = null` — sama seperti sebelum Task 12 dimulai.
 
-**Yang benar-benar tidak bisa diverifikasi: apa pun yang butuh frame.** Daftar menu masuk bertahap
-sekali saja, kehalusan shimmer, denyut titik badge, dan angka saldo berakhir di nilai sebenarnya
-semuanya butuh renderer yang bergerak. Count-up khususnya: hook-nya berjalan di atas
-`requestAnimationFrame`, jadi di tab tanpa frame ia tampak diam di nilai lama — dan itu akan
-terbaca sebagai kerusakan kalau diperiksa sekarang. Satu akibat lain dari tab yang tidak
-dikomposit: halaman bersesi tidak bisa dimuat ulang sama sekali, karena login pun butuh hidrasi
-yang tidak selesai.
+**Sisa pemeriksaan tertunda karena tab peramban berhenti dikomposit.** Di tengah pengerjaan
+`requestAnimationFrame` tidak pernah dipanggil dan tangkapan layar ditolak sistem ("Screenshot
+needs a visible tab"), jadi tidak ada animasi yang bisa diamati, dan halaman bersesi bahkan tidak
+bisa dimuat ulang — login pun butuh hidrasi yang tidak selesai. Setelah jendela peramban tampil
+kembali, putaran penutupnya dijalankan penuh. Hasilnya, dengan bukti apa adanya:
 
-Verifikasi visualnya, termasuk bagian "Verifikasi Akhir" yang menunggu inspector anti-slop dan
-tangkapan layar `/login` 360×560, menunggu jendela peramban tampil kembali.
+- **Count-up, jalur animasi.** Saldo dinaikkan 1.800 P → 3.200 P lewat basis data. Rekaman per
+  frame: 1.810 → 1.970 → 2.111 → 2.241 → … → 3.199 → **3.200**, 35 langkah, ~16,6 ms per langkah
+  (60 fps), mendarat tepat di nilai sebenarnya. Simpul DOM-nya ditandai lebih dulu dan tandanya
+  masih ada sesudahnya, jadi yang beranimasi memang hook-nya, bukan pulau yang ter-mount ulang.
+- **Count-up, jalur reduced motion.** Peramban ini melaporkan
+  `prefers-reduced-motion: reduce`. Di keadaan itu nilainya melompat 2.500 → 1.800 dalam satu
+  frame dan simpul bertanda tetap hidup — lompatan itu memang jalur yang dirancang, bukan pulau
+  yang terpasang ulang.
+- **Stagger daftar menu.** Enam kartu memakai `motion-safe:animate-fade-up` dengan jadwal delay
+  nyata 0 / 0,055 / 0,11 / 0,165 s, lalu kelompok kategori kedua mulai lagi dari 0 s. Sesudah
+  ~900 ms kelasnya dilepas (terekam `kelas: [false × 6]`), dan berpindah stand (6 kartu → 5)
+  tidak memicu sapuan ulang: `berkelas: 0`.
+- **Denyut badge.** Kelasnya persis `motion-safe:animate-pulse-dot`, dan hanya muncul di badge
+  `processing` ("Disiapkan") serta `ready_for_pickup` ("Siap Diambil").
+- **Shimmer.** Dari HTML server: `<span class="absolute inset-0 -translate-x-full
+  bg-gradient-to-r … motion-safe:animate-shimmer">`, 36 pita kerangka yang semuanya berdiri di
+  luar bidang lewat kelas dasarnya selama animasinya mati.
+- **Gerbang gerak minimal benar-benar bekerja.** Di peramban ini `animation-name` untuk stagger,
+  shimmer, dan denyut semuanya `none` dengan durasi yang dipaksa `1e-06s`: pengguna yang meminta
+  gerak minimal melihat halaman sepenuhnya diam dan tetap terbaca penuh. Media query CSS tidak
+  bisa dipalsukan dari JavaScript, jadi animasi CSS-nya sendiri tidak bisa dipertontonkan di
+  mesin ini; yang bisa dan sudah dibuktikan adalah deklarasinya. Dari CSSOM,
+  `.motion-safe\:animate-fade-up` dan `.animate-fade-up` (tanpa gerbang) membawa deklarasi yang
+  sama persis — `360ms cubic-bezier(0.22, 1, 0.36, 1) … both fade-up` — dan `@keyframes
+  fade-up` / `pulse-dot` / `shimmer` beserta kelasnya berada di dalam
+  `@media (prefers-reduced-motion: no-preference)`.
+
+**Catatan untuk melihat animasinya.** Peramban di mesin ini melaporkan
+`prefers-reduced-motion: reduce`, jadi seluruh animasi barunya memang sengaja tidak berjalan —
+halaman tetap utuh dan terbaca, hanya diam. Untuk melihat sapuan bertahap, count-up, shimmer, dan
+denyut badge, matikan dulu permintaan gerak minimal itu, salah satu dari:
+
+- DevTools → **Rendering** → *Emulate CSS media feature prefers-reduced-motion* →
+  `no-preference` (paling cepat, hanya untuk tab itu), atau
+- Windows → **Settings → Accessibility → Visual effects → Animation effects** dimatikan.
+
+Sesudah itu muat ulang halaman. Tidak ada perubahan kode yang diperlukan untuk keduanya.
 
 - [ ] **Step 8: Commit**
 
@@ -1752,18 +1785,42 @@ Dijalankan setelah seluruh task selesai.
       dan seluruh 36 pernyataan tetap lulus sesudahnya. Penjaganya memang ada di berkasnya:
       `add value if not exists`, `add column if not exists`, `exception when duplicate_object`,
       `create index if not exists`, `drop function if exists`, `create or replace`.)
-- [ ] E2E alur normal: pesan → Terima → Siap → Selesai, sebagai tiga peran berbeda.
-      **Tertahan.** Mesin keadaannya sudah diuji di tingkat basis data oleh
-      `003_preorder_resolution.sql` (13 pernyataan), dan bagian alurnya sudah dijalankan di
-      peramban pada Task 5–7; yang belum adalah satu putaran penuh sesudah seluruh Task 11–12
-      masuk.
-- [ ] E2E alur penalti: tolak → poin kembali; pesan lagi → Tidak Diambil dua kali → poin
-      hangus pada yang kedua, spanduk blokir muncul, tombol pesan hilang.
-      **Tertahan, alasan sama** — aturannya sendiri lulus di tingkat basis data.
-- [ ] Inspector anti-slop pada `/`, `/papan-skor`, `/login`, `/lupa-password`,
-      `/reset-password`, `/siswa/kantin`, dan `/kantin`: 0 FAIL. **Tertahan**: inspector itu
-      bekerja di peramban sungguhan, dan separuh halamannya juga butuh sesi.
-- [ ] Screenshot `/login` pada lebar 360px dan tinggi 560px. **Tertahan**, sebab yang sama.
+- [x] E2E alur normal: pesan → Terima → Siap → Selesai. Dijalankan utuh di peramban sebagai
+      siswa dan penjual: "Jus Alpukat" dipesan (tunai, Rp9.000, `awaiting_approval`), penjual
+      menekan **Terima Pesanan** → "Disiapkan" (dot denyut), **Siap Diambil** → "Siap Diambil",
+      **Selesai Diambil** → selesai, dan papan penjual kembali "Belum ada pesanan" tanpa sisa
+      titik denyut. Papan "Kantin Pakde" juga terbukti **tidak** menampilkan pesanan milik stand
+      "Kantin Tengah" — isolasi stand bekerja.
+- [x] E2E alur penalti: pesanan berbayar poin (1.200 P dari saldo 1.500 P). Penjual menandai
+      **Tidak Diambil** pertama → `points_refunded = 1200`, saldo kembali 1.500 P,
+      `unclaimed_orders_count = 1`, belum diblokir, dan spanduk kuning "Satu pesananmu tidak
+      diambil" muncul di halaman kantin siswa. Pesanan poin kedua lalu ditandai **Tidak Diambil**
+      kedua → `points_refunded = 0` (poin hangus), saldo tetap 300 P,
+      `unclaimed_orders_count = 2`, `preorder_blocked_until` tiga hari ke depan. Halaman kantin
+      siswa berubah menjadi spanduk merah `bg-danger-50` "Pre-Order Kantin diblokir sementara",
+      katalog menu hilang, dan **nol** tombol pesan. `get_preorder_status()` sebagai siswa
+      mengembalikan nilai yang sama: `is_blocked: true`, `unclaimed_count: 2`, `blocked_until`
+      terisi.
+      Sebagian transisi penjual dijalankan lewat RPC `vendor_resolve_order` — jalur yang sama
+      dengan tombolnya, dan tombolnya sendiri sudah diklik tiga kali di muka pada alur normal;
+      akibat di sisi siswa diperiksa di peramban. Percobaan menandai "Tidak Diambil" pada pesanan
+      yang belum siap ditolak dengan `PZ005` — penjaganya hidup.
+- [x] Inspector anti-slop pada ketujuh halaman: **0 FAIL** pada empat aturan yang bisa diukur.
+      Nol emoji di `/`, `/papan-skor`, `/login`, `/lupa-password`, `/reset-password`,
+      `/siswa/kantin`, dan `/kantin`. Nol teks di bawah 13 px — diukur dari gaya terhitung pada
+      halaman yang hidup, dan dari kelas font pada HTML yang dikirim server. Nol angka tanpa
+      `tnum`. Dan seluruh `bg-gradient-*` di aplikasi ternyata satu kelas yang sama, yaitu pita
+      shimmer: tidak ada gradien dekoratif. Kontras sudah diverifikasi ≥4,67:1 di milestone
+      sebelumnya, dan Task 11–12 tidak mengubah paletnya.
+- [x] Screenshot `/login` pada lebar 360px dan tinggi 560px, diambil lewat iframe sesama asal
+      berukuran tetap. Geometri terukurnya: form 313 px, isian 265×45 px, tombol **Masuk**
+      265×48 px dengan dasar di 508 px — **terlihat penuh** di dalam 560 px, tidak terdorong
+      keluar layar oleh apa pun.
+- [x] Keadaan data demo dipulihkan sesudah semua pemeriksaan di atas: 0 pesanan, 0 item,
+      0 voucher, siswa di 0 P dan 0.00 kg, `unclaimed_orders_count = 0`,
+      `preorder_blocked_until = null`. Setelah blokirnya dicabut, katalog menu siswa kembali
+      normal (6 tombol "Tambah", tanpa spanduk) — jalur pemulihan malas `get_preorder_status()`
+      bekerja.
 - [x] `git log` bersih, `.env.local` tidak pernah ikut ter-commit. (`git log --all -- .env.local`
       kosong; berkasnya juga masih terdaftar di `.gitignore`.)
 
