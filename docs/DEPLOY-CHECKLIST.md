@@ -65,6 +65,19 @@ tidak punya catatan DNS sama sekali (NXDOMAIN). Setelah percobaan berulang,
 SMTP bawaan Supabase menjawab `429 over_email_send_rate_limit`. Jadi
 kegagalannya di pengiriman email, bukan di alur reset aplikasinya.
 
+**Yang sering disalahpahami.** Menambahkan URL callback (bagian 3) **tidak**
+memperbaiki pengiriman email. URL callback hanya menentukan ke mana pengguna
+diarahkan *setelah* mengeklik tautan di dalam email; selama alamatnya belum bisa
+menerima surat, Supabase menolaknya lebih dulu dan tidak ada email yang dibuat
+sama sekali. Dicek ulang 17 Okt 2026: `skamuda.sch.id` masih
+`DNS name does not exist`, jadi akun `@skamuda.sch.id` - termasuk seluruh akun
+demo - belum bisa menerima email reset, apa pun setelan SMTP-nya.
+
+**Akibat yang lebih luas.** Bila **Authentication → Sign In / Providers →
+Email → Confirm email** menyala, pendaftaran dengan alamat `@skamuda.sch.id`
+juga tidak akan pernah tuntas, karena surat konfirmasinya pun tidak bisa
+terkirim. Periksa setelan itu bersamaan dengan SMTP.
+
 **Yang sudah terbukti benar.** Alurnya sendiri (token sekali pakai sampai
 `/reset-password`) sudah diuji dengan tautan yang dibuat admin, dan berhasil.
 Tidak ada yang perlu diubah di kode sebelum email bisa keluar.
@@ -91,8 +104,11 @@ origin yang dipakai:
 - **Site URL** di halaman yang sama diisi origin produksi.
 
 Kalau langkah ini terlewat, tautan konfirmasi dan tautan reset akan ditolak
-Supabase atau mendarat di halaman yang salah. Ini juga yang dibutuhkan supaya
-bagian 2 bisa diuji.
+Supabase atau mendarat di halaman yang salah.
+
+Per 17 Okt 2026, `https://ecohub-skamuda.vercel.app/auth/callback` dan Site URL
+produksi sudah ditambahkan. Yang belum: callback `http://localhost:3000` bila
+Anda mengembangkan di mesin sendiri.
 
 ---
 
