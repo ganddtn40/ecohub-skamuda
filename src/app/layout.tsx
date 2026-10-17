@@ -51,6 +51,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           melihat satu pun konten saat baris ini dieksekusi.
         */}
         <script dangerouslySetInnerHTML={{ __html: TIER_BOOTSTRAP }} />
+        {/*
+          Jaring untuk peramban tanpa JavaScript.
+
+          Keadaan `initial` milik Framer Motion tidak pernah berganti tanpa
+          hidrasi, dan yang tertulis di HTML untuk elemen itu adalah
+          `opacity: 0` — artinya tanpa JavaScript justru kontennya yang hilang,
+          bukan animasinya. Satu aturan ini mengembalikannya ke keadaan akhir.
+          Ditulis sebagai CSS, bukan sebagai `initial={false}`, karena yang
+          perlu diperbaiki bukan mesin yang punya JavaScript, melainkan mesin
+          yang tidak punya.
+        */}
+        <noscript>
+          <style>{`[data-stagger-item]{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
         <MotionProvider>{children}</MotionProvider>
       </body>
     </html>

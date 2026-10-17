@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { LoopMotif } from "@/components/art/LoopMotif";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { ROUTE } from "@/lib/constants";
 
 /**
@@ -72,7 +73,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </footer>
       </div>
 
-      <aside className="field on-field relative overflow-hidden bg-eco-900 px-5 pb-10 pt-9 text-white md:flex md:min-h-dvh md:flex-col md:gap-5 md:px-7 md:py-10 lg:px-8">
+      <StaggerGroup
+        as="aside"
+        className="field on-field relative overflow-hidden bg-eco-900 px-5 pb-10 pt-9 text-white md:flex md:min-h-dvh md:flex-col md:gap-5 md:px-7 md:py-10 lg:px-8"
+      >
         <LoopMotif className="pointer-events-none absolute -right-28 -top-32 h-[26rem] w-[26rem] text-eco-600/25 md:h-[30rem] md:w-[30rem] lg:h-[34rem] lg:w-[34rem]" />
 
         <div className="relative hidden min-h-0 flex-1 overflow-hidden rounded-card md:block">
@@ -92,26 +96,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           />
         </div>
 
-        <p
-          className="page-x relative mx-auto mt-0 w-full max-w-lg animate-fade-up text-display font-extrabold md:mx-0 md:max-w-xl md:px-0"
-          style={{ animationDelay: "60ms" }}
+        <StaggerItem
+          as="p"
+          className="page-x relative mx-auto mt-0 w-full max-w-lg text-display font-extrabold md:mx-0 md:max-w-xl md:px-0"
         >
           Sampah jadi poin.
-        </p>
+        </StaggerItem>
 
-        <p
-          className="page-x relative mx-auto mt-4 w-full max-w-lg animate-fade-up text-[17px] leading-relaxed text-white/75 md:mx-0 md:max-w-md md:px-0"
-          style={{ animationDelay: "140ms" }}
+        <StaggerItem
+          as="p"
+          className="page-x relative mx-auto mt-4 w-full max-w-lg text-[17px] leading-relaxed text-white/75 md:mx-0 md:max-w-md md:px-0"
         >
           Pisahkan dari rumah, timbang di sekolah, lalu tukar jadi makan siang di kantin.
-        </p>
+        </StaggerItem>
 
         <ul className="page-x relative mx-auto mt-6 grid w-full max-w-lg grid-cols-3 gap-3 sm:gap-4 md:mx-0 md:mt-0 md:max-w-none md:px-0">
           {MATERIALS.map((material, index) => (
-            <li
+            <StaggerItem
+              as="li"
               key={material.src}
-              className="relative aspect-[4/3] animate-fade-up overflow-hidden rounded-card"
-              style={{ animationDelay: `${220 + index * 90}ms` }}
+              className="relative aspect-[4/3] overflow-hidden rounded-card"
             >
               <Image
                 src={material.src}
@@ -121,10 +125,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 className="animate-slow-zoom object-cover"
                 style={{ animationDelay: `${index * -3}s` }}
               />
-            </li>
+            </StaggerItem>
           ))}
         </ul>
-      </aside>
+      </StaggerGroup>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { LoopMotif } from "@/components/art/LoopMotif";
 import { RevealScope } from "@/components/motion/RevealScope";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { HeroDevice } from "@/components/public/HeroDevice";
 import { PointSimulator } from "@/components/public/PointSimulator";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -89,7 +90,7 @@ export default async function HomePage() {
       <section className="field on-field bg-eco-900 text-white">
         <LoopMotif className="pointer-events-none absolute -right-[38%] -top-[24%] h-[40rem] w-[40rem] text-eco-600/35 sm:-right-[20%] sm:h-[46rem] sm:w-[46rem] lg:top-1/2 lg:h-[52rem] lg:w-[52rem] lg:-translate-y-1/2 lg:translate-x-[20%]" />
 
-        <div className="page-x relative pb-16 pt-6 sm:pb-20">
+        <StaggerGroup className="page-x relative pb-16 pt-6 sm:pb-20">
           <div className={ENTER} style={delay(0)}>
             <PublicNav links={NAV_LINKS} />
           </div>
@@ -105,19 +106,16 @@ export default async function HomePage() {
 
           <div className="mt-12 grid items-start gap-12 lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-6">
-              <p
-                className={`${ENTER} max-w-xl text-[17px] leading-relaxed text-white/80`}
-                style={delay(140)}
+              <StaggerItem
+                as="p"
+                className="max-w-xl text-[17px] leading-relaxed text-white/80"
               >
                 SKAMUDA EcoHub menyatukan Bank Sampah berbasis poin dan Pre-Order Kantin Pintar
                 dalam satu aplikasi untuk seluruh warga SMKN 1 Murung Pudak. Satu saldo, dipakai
                 langsung di kantin.
-              </p>
+              </StaggerItem>
 
-              <div
-                className={`${ENTER} mt-9 flex flex-wrap items-center gap-x-6 gap-y-3`}
-                style={delay(220)}
-              >
+              <StaggerItem className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
                 <Link href={ROUTE.register} className={buttonStyles("onDark")}>
                   Daftar akun siswa
                 </Link>
@@ -128,13 +126,10 @@ export default async function HomePage() {
                   Lihat papan skor kelas
                   <ArrowRight size={16} aria-hidden />
                 </Link>
-              </div>
+              </StaggerItem>
             </div>
 
-            <div
-              className={`${ENTER} relative flex items-end justify-center gap-1 sm:gap-4 lg:col-span-6 lg:justify-end`}
-              style={delay(320)}
-            >
+            <StaggerItem className="relative flex items-end justify-center gap-1 sm:gap-4 lg:col-span-6 lg:justify-end">
               <Image
                 src="/images/leaf-sprig.svg"
                 alt=""
@@ -156,9 +151,9 @@ export default async function HomePage() {
                   dish={featured ? { name: featured.name, price_idr: featured.price_idr } : null}
                 />
               </div>
-            </div>
+            </StaggerItem>
           </div>
-        </div>
+        </StaggerGroup>
       </section>
 
       {/* Bab 2 - dampak. Satu angka memiliki layar, jadi angka itu sendiri judulnya. */}
