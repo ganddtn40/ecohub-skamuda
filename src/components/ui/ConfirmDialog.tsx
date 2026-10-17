@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
+import { SPRING_SENTUH } from "@/components/motion/StaggerGroup";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -83,7 +84,7 @@ export function ConfirmDialog({
             initial={{ scale: 0.96, y: 8 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.97, y: 6 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={SPRING_SENTUH}
             className="relative z-10 w-full max-w-sm rounded-card bg-white p-5"
           >
             <div className="flex items-start gap-2.5">

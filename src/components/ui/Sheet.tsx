@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { SPRING_SENTUH } from "@/components/motion/StaggerGroup";
 import { cn } from "@/lib/cn";
 
 /**
@@ -77,7 +78,7 @@ export function Sheet({
             initial={{ y: 24, scale: 0.98 }}
             animate={{ y: 0, scale: 1 }}
             exit={{ y: 20, scale: 0.98 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            transition={SPRING_SENTUH}
             className={cn(
               "relative z-10 flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-header bg-white shadow-sheet",
               "sm:rounded-card sm:shadow-float",
