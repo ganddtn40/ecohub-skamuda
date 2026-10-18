@@ -262,7 +262,11 @@ export default async function HomePage() {
                   >
                     <dt className="text-[17px] text-ink-soft">{type.label}</dt>
                     <dd className="tnum text-[17px] font-bold text-eco-700">
-                      {formatNumber(type.points_per_kg)} poin / {type.unit_label}
+                      {/* Nilai tukar ini per kilogram, bukan per satuan:
+                          `process_waste_deposit` mengalikan points_per_kg
+                          dengan berat, sedangkan `unit_label` hanya satuan
+                          hitungan di form petugas. */}
+                      {formatNumber(type.points_per_kg)} poin / kg
                     </dd>
                   </div>
                 ))}

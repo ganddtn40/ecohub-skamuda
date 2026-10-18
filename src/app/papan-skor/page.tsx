@@ -162,7 +162,7 @@ export default async function LeaderboardPage() {
                       <figcaption className="mt-3">
                         <span className="block text-[17px] font-bold text-ink">{type.label}</span>
                         <span className="tnum mt-0.5 block text-small text-muted">
-                          {formatNumber(type.points_per_kg)} poin / {type.unit_label}
+                          {formatNumber(type.points_per_kg)} poin / kg
                         </span>
                       </figcaption>
                     </figure>
