@@ -70,6 +70,7 @@ skamuda-ecohub/
 │  ├─ migrations/001_production_live.sql  # skema, RLS, trigger, RPC (jalankan PERTAMA)
 │  ├─ migrations/latest_update.sql        # pembaruan pre-order, tiga bagian berlabel
 │  ├─ migrations/005_kurs_poin.sql        # kurs poin Rp10 -> Rp5, untuk DB yang sudah terisi
+│  ├─ migrations/006_kantin_tengah.sql    # stand Kantin Tengah + menu awalnya (produksi)
 │  ├─ migrations/00{2,3,4}_*.sql          # riwayat: isi latest_update.sql, dipecah
 │  ├─ seed.sql                            # data awal: kelas, config, menu, akun demo (KEDUA)
 │  ├─ tests/                              # 36 asersi SQL untuk aturan pre-order
@@ -79,6 +80,7 @@ skamuda-ecohub/
 │  ├─ check-sql.mjs                       # menjalankan supabase/tests/*.sql
 │  ├─ check-preorder-rules.ts             # aturan bayar poin (murni, tanpa impor)
 │  ├─ check-motion-tiers.ts               # ambang tingkat gerak (murni, tanpa impor)
+│  ├─ check-nav-active.ts                 # penanda nav yang menyala (murni, tanpa impor)
 │  └─ db.mjs                              # menjalankan satu berkas SQL
 ├─ docs/
 │  ├─ DEPLOY-CHECKLIST.md                 # langkah deploy + penghalang yang diketahui
@@ -91,7 +93,7 @@ skamuda-ecohub/
 │  │  ├─ papan-skor/     # papan peringkat publik
 │  │  └─ page.tsx        # landing publik
 │  ├─ components/        # UI, motion, siswa, petugas, kantin, qr, layout
-│  ├─ lib/               # supabase client/server/middleware, format, device-tier, preorder
+│  ├─ lib/               # supabase client/server/middleware, format, device-tier, preorder, nav-active
 │  └─ types/database.ts  # tipe tabel & enum
 ├─ middleware.ts         # guard rute + refresh sesi
 └─ .env.example
@@ -125,6 +127,7 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan berurutan:
 2. `supabase/seed.sql`: 30 kelas resmi, jenis sampah, tier voucher, 2 stand kantin + contoh menu, dan 4 akun demo.
 3. `supabase/migrations/latest_update.sql`: pembaruan pre-order (nilai status baru, penalti siswa, mode bayar poin, dan aturan satu pesanan aktif). Berkas ini **tiga bagian berlabel**: tempel Bagian 1 → Run, Bagian 2 → Run, lalu Bagian 3 yang hanya memeriksa. Baris `RINGKASAN` harus berbunyi `SEMUA ADA (16/16)`.
 4. `supabase/migrations/005_kurs_poin.sql`: **hanya perlu** untuk database yang sudah terlanjur di-seed dengan kurs lama (1 poin = Rp10). `seed.sql` sekarang sudah memakai kurs Rp5. Jalankan, lalu pastikan `RINGKASAN` berbunyi `SESUAI`.
+5. `supabase/migrations/006_kantin_tengah.sql`: **khusus produksi.** Menambahkan stand Kantin Tengah beserta menu awalnya untuk penjual `kantin.tengah@skamuda.sch.id`. Berkas ini memakai id akun yang ada di produksi, jadi di database lokal ia tidak menemukan penjualnya dan hanya melaporkan `BELUM SESUAI` — itu memang hasil yang benar. Harga di dalamnya perkiraan; penjual menggantinya sendiri lewat **Kelola Menu**.
 
 > Jalankan migrasi dulu, baru seed.
 
@@ -143,7 +146,9 @@ Buka [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Akun Demo (dari `seed.sql`)
+## Akun Demo (hanya dari `seed.sql`)
+
+`seed.sql` membuat empat akun contoh untuk pengembangan lokal. **Akun-akun itu sudah dihapus dari database produksi (18 Oktober 2026)**, jadi jangan mengharapkannya ada di sana.
 
 | Peran | Email | Password |
 | --- | --- | --- |
@@ -152,7 +157,9 @@ Buka [http://localhost:3000](http://localhost:3000).
 | Penjual Kantin (Berkah) | `kantin.berkah@skamuda.sch.id` | `Skamuda2026!` |
 | Penjual Kantin (Sehat) | `kantin.sehat@skamuda.sch.id` | `Skamuda2026!` |
 
-> Ganti password dan hapus akun demo sebelum dipakai di produksi nyata.
+Di produksi akunnya dibuat sendiri lewat Supabase: satu siswa pendaftar, satu petugas Bank Sampah, dan dua penjual dengan stand **Kantin Pakde** dan **Kantin Tengah**. Perannya diatur lewat `supabase/production_seed_roles.sql`.
+
+> Ganti kata sandi akun contoh bila dipakai di lingkungan nyata.
 
 ---
 
@@ -172,7 +179,7 @@ Tabel inti (semua di `public`):
 | --- | --- |
 | `profiles` | Profil pengguna: `role`, `points_balance`, `total_recycled_kg`, `qr_code_token` (uuid unik), kelas, serta penalti `unclaimed_orders_count` dan `preorder_blocked_until`. |
 | `classes` | Daftar kelas resmi (dapat diedit admin). |
-| `waste_item_types` | Jenis sampah + `points_per_kg` (per satuan untuk botol/kaleng, per kg untuk sisanya). |
+| `waste_item_types` | Jenis sampah + `points_per_kg`, nilai poin **per kilogram**: poin yang didapat = `floor(points_per_kg × berat kg)`, tanpa memandang jenisnya. `unit_label` (botol, kaleng, kg) hanyalah satuan di kolom jumlah pada form petugas, bukan satuan nilai poin. |
 | `voucher_tiers` | Tier tukar poin: 500 → Rp2.500, 1.200 → Rp6.000, 2.500 → Rp12.500. |
 | `canteen_stands` | Stand kantin. |
 | `menu_items` | Menu per stand: `price_idr`, `points_price` (`null` berarti tidak bisa dibayar poin), kategori, ketersediaan. |
@@ -216,6 +223,7 @@ bash scripts/check-types                       # tsc: 0 error
 npm run build                                  # build produksi
 node --experimental-strip-types scripts/check-motion-tiers.ts     # ambang tingkat gerak
 node --experimental-strip-types scripts/check-preorder-rules.ts   # aturan bayar poin
+node --experimental-strip-types scripts/check-nav-active.ts       # penanda nav yang menyala
 node --env-file=.env.local scripts/check-sql.mjs \
   supabase/tests/001_schema_probe.sql \
   supabase/tests/002_preorder_rules.sql \
@@ -223,6 +231,8 @@ node --env-file=.env.local scripts/check-sql.mjs \
 ```
 
 Tidak ada ESLint di proyek ini; `tsc` dan `npm run build` adalah gerbang statisnya.
+
+Berkas uji SQL **menyiapkan siswa ujinya sendiri** dan selalu berakhir rollback, jadi ia tidak menuntut akun demo maupun data seed, dan tidak meninggalkan apa pun di database.
 
 ---
 
@@ -246,7 +256,7 @@ npm run dev
 - `/`, `/login`, `/register`, `/cek-email`, `/lupa-password`, `/papan-skor` → **200** (halaman publik). `/reset-password` hanya berguna dengan tautan dari email.
 - `/siswa`, `/petugas`, `/kantin` tanpa login → **redirect ke `/login`**.
 
-Untuk uji penuh: login demo → buka QR siswa → pindai di panel petugas → lihat poin bertambah → pesan di kantin (isi catatan + tukar voucher, atau bayar penuh dengan poin) → cek papan pesanan vendor real-time → ubah status sampai selesai → uji `Tidak Diambil` → verifikasi tiket → ekspor CSV riwayat → cek `/papan-skor` ikut ter-update.
+Untuk uji penuh: masuk sebagai siswa (akun demo di lokal, atau akun sekolah di produksi) → buka QR siswa → pindai di panel petugas → lihat poin bertambah → pesan di kantin (isi catatan + tukar voucher, atau bayar penuh dengan poin) → cek papan pesanan vendor real-time → ubah status sampai selesai → uji `Tidak Diambil` → verifikasi tiket → ekspor CSV riwayat → cek `/papan-skor` ikut ter-update.
 
 ---
 
