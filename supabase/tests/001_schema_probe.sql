@@ -24,13 +24,25 @@ declare
   -- Kalimat yang diharapkan muncul dari prevent_profile_escalation.
   v_guard   constant text := 'hanya dapat diubah oleh sistem';
 begin
-  select id into v_student
-  from auth.users
-  where email = 'siswa.demo@skamuda.sch.id';
+  -- Akun demo sudah dihapus dari database produksi (18 Oktober 2026), jadi
+  -- berkas ini tidak lagi bergantung padanya: ia menyiapkan siswa uji
+  -- sementara sendiri. Blok ini selalu berakhir `raise exception`, jadi
+  -- transaksinya rollback dan akun itu tidak pernah menempel di database.
+  v_student := gen_random_uuid();
 
-  if v_student is null then
-    raise exception 'Siswa demo tidak ditemukan. Jalankan seed lebih dulu.';
-  end if;
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change
+  ) values (
+    '00000000-0000-0000-0000-000000000000',
+    v_student, 'authenticated', 'authenticated', 'siswa.uji@skamuda.sch.id',
+    'bukan-kata-sandi-nyata', now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"full_name":"Siswa Uji"}'::jsonb,
+    now(), now(), '', '', '', ''
+  );
+  -- Trigger handle_new_user sudah membuat profilnya dengan peran 'student'.
 
   ---------------------------------------------------------------- nilai enum
   select exists (

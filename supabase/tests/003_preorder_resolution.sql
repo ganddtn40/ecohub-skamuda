@@ -57,10 +57,25 @@ declare
   v_failed    boolean;
   v_state     text;
 begin
-  select id into v_student from auth.users where email = 'siswa.demo@skamuda.sch.id';
-  if v_student is null then
-    raise exception 'Siswa demo tidak ditemukan. Jalankan seed lebih dulu.';
-  end if;
+  -- Akun demo sudah dihapus dari database produksi (18 Oktober 2026), jadi
+  -- berkas ini menyiapkan siswa uji sementara sendiri. Blok ini selalu berakhir
+  -- `raise exception`, jadi transaksinya rollback dan akun itu tidak pernah
+  -- menempel di database.
+  v_student := gen_random_uuid();
+
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change
+  ) values (
+    '00000000-0000-0000-0000-000000000000',
+    v_student, 'authenticated', 'authenticated', 'siswa.uji@skamuda.sch.id',
+    'bukan-kata-sandi-nyata', now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"full_name":"Siswa Uji"}'::jsonb,
+    now(), now(), '', '', '', ''
+  );
+  -- Trigger handle_new_user sudah membuat profilnya dengan peran 'student'.
 
   select cs.id, cs.vendor_id into v_stand, v_vendor
   from public.canteen_stands cs
