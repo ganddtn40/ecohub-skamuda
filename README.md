@@ -1,3 +1,5 @@
+![Beranda SKAMUDA EcoHub: judul "Sampah jadi poin, kantin tanpa antre" dengan tangkapan layar ponsel di sebelahnya](docs/screenshots/beranda.png)
+
 # SKAMUDA EcoHub
 
 Ekosistem digital **SMKN 1 Murung Pudak**: Bank Sampah berbasis poin + Pre-Order Kantin Pintar dalam satu aplikasi web.
@@ -84,6 +86,7 @@ skamuda-ecohub/
 │  └─ db.mjs                              # menjalankan satu berkas SQL
 ├─ docs/
 │  ├─ DEPLOY-CHECKLIST.md                 # langkah deploy + penghalang yang diketahui
+│  ├─ screenshots/                        # gambar untuk README (bukan aset aplikasi)
 │  └─ superpowers/                        # catatan desain & rencana yang sudah dijalankan
 ├─ src/
 │  ├─ app/
