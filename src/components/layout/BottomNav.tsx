@@ -4,12 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_BY_ROLE } from "@/components/layout/nav";
 import { cn } from "@/lib/cn";
+import { activeNavHref } from "@/lib/nav-active";
 import type { UserRole } from "@/types/database";
 
 /** Navigasi bawah khusus mobile (md:hidden). Target sentuh minimal 44px. */
 export function BottomNav({ role }: { role: UserRole }) {
   const pathname = usePathname();
   const nav = NAV_BY_ROLE[role];
+  const activeHref = activeNavHref(
+    pathname,
+    nav.map((item) => item.href),
+  );
 
   return (
     <nav
@@ -21,7 +26,7 @@ export function BottomNav({ role }: { role: UserRole }) {
         style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}
       >
         {nav.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active = item.href === activeHref;
           const Icon = item.icon;
           return (
             <li key={item.href}>

@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { NAV_BY_ROLE } from "@/components/layout/nav";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { cn } from "@/lib/cn";
+import { activeNavHref } from "@/lib/nav-active";
 import type { UserRole } from "@/types/database";
 
 /**
@@ -30,6 +31,10 @@ export function AppHeader({
 }) {
   const pathname = usePathname();
   const nav = NAV_BY_ROLE[role];
+  const activeHref = activeNavHref(
+    pathname,
+    nav.map((item) => item.href),
+  );
 
   return (
     <header className="on-field bg-eco-900 text-white">
@@ -49,7 +54,7 @@ export function AppHeader({
         <StaggerItem>
           <nav aria-label="Navigasi utama" className="page-x hidden gap-1 pb-4 md:flex">
             {nav.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = item.href === activeHref;
               const Icon = item.icon;
               return (
                 <Link
