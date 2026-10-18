@@ -94,6 +94,10 @@ skamuda-ecohub/
 │  │  ├─ (app)/          # halaman terproteksi (siswa, petugas, kantin)
 │  │  ├─ auth/callback/  # handler konfirmasi & reset dari Supabase
 │  │  ├─ papan-skor/     # papan peringkat publik
+│  │  ├─ favicon.ico     # ikon tab
+│  │  ├─ icon.png        # ikon tab 32x32
+│  │  ├─ apple-icon.png  # ikon layar utama iOS (180x180)
+│  │  ├─ manifest.ts     # manifest PWA: nama, warna, ikon Android
 │  │  └─ page.tsx        # landing publik
 │  ├─ components/        # UI, motion, siswa, petugas, kantin, qr, layout
 │  ├─ lib/               # supabase client/server/middleware, format, device-tier, preorder, nav-active
